@@ -16,7 +16,7 @@ namespace PaymentTracker.DTOs
 
     public class AccountResponse
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public int UserId { get; set; }
         public required string BankName { get; set; }
         public required string AccountNumber { get; set; }

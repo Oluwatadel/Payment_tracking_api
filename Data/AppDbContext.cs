@@ -48,6 +48,10 @@ namespace PaymentTracker.Data
                 .Property(p => p.Amount)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<Account>()
+                .HasIndex(a => a.UserId)
+                .IsUnique();
+            
             modelBuilder.Entity<Payment>()
                 .HasIndex(p => new { p.UserId, p.PaymentDate });
         }

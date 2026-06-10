@@ -1,7 +1,6 @@
-using PaymentTracker.Data;
 using PaymentTracker.DTOs;
 using PaymentTracker.Models;
-using Microsoft.EntityFrameworkCore;
+using PaymentTracker.Repositories;
 
 namespace PaymentTracker.Services
 {
@@ -14,24 +13,26 @@ namespace PaymentTracker.Services
 
     public class AccountService : IAccountService
     {
-        private readonly AppDbContext _context;
+        private readonly IAccountRepository _accountRepository;
+        private readonly IUserRepository _userRepository;
 
-        public AccountService(AppDbContext context)
+        public AccountService(IAccountRepository accountRepository, IUserRepository userRepository)
         {
-            _context = context;
+            _accountRepository = accountRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<Account?> GetAccountByUserIdAsync(int userId)
         {
-            return await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            return await _accountRepository.GetByUserIdAsync(userId);
         }
 
         public async Task<Account> CreateAccountAsync(int userId, CreateAccountRequest request)
         {
-            var existingAccount = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.UserId == userId);
+            if (!await _userRepository.ExistsByIdAsync(userId))
+                throw new InvalidOperationException("User not found");
 
-            if (existingAccount != null)
+            if (await _accountRepository.ExistsByUserIdAsync(userId))
                 throw new InvalidOperationException("User already has an account");
 
             var account = new Account
@@ -39,18 +40,18 @@ namespace PaymentTracker.Services
                 UserId = userId,
                 BankName = request.BankName,
                 AccountNumber = request.AccountNumber,
-                AccountHolder = request.AccountHolder
+                AccountHolder = request.AccountHolder ?? string.Empty
             };
 
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
+            await _accountRepository.AddAsync(account);
+            await _accountRepository.SaveChangesAsync();
 
             return account;
         }
 
         public async Task<Account?> UpdateAccountAsync(int userId, UpdateAccountRequest request)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            var account = await _accountRepository.GetByUserIdAsync(userId, tracking: true);
             if (account == null)
                 return null;
 
@@ -64,7 +65,7 @@ namespace PaymentTracker.Services
                 account.AccountHolder = request.AccountHolder;
 
             account.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
 
             return account;
         }

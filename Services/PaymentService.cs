@@ -1,7 +1,7 @@
 using PaymentTracker.Data;
 using PaymentTracker.DTOs;
 using PaymentTracker.Models;
-using Microsoft.EntityFrameworkCore;
+using PaymentTracker.Repositories;
 
 namespace PaymentTracker.Services
 {
@@ -19,16 +19,23 @@ namespace PaymentTracker.Services
 
     public class PaymentService : IPaymentService
     {
-        private readonly AppDbContext _context;
+        private readonly IPaymentRepository _paymentRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IAccountRepository _accountRepository;
 
-        public PaymentService(AppDbContext context)
+        public PaymentService(
+            IPaymentRepository paymentRepository,
+            IUserRepository userRepository,
+            IAccountRepository accountRepository)
         {
-            _context = context;
+            _paymentRepository = paymentRepository;
+            _userRepository = userRepository;
+            _accountRepository = accountRepository;
         }
 
         public async Task<PaymentResponse?> GetPaymentByIdAsync(int paymentId)
         {
-            var payment = await _context.Payments.FindAsync(paymentId);
+            var payment = await _paymentRepository.GetByIdAsync(paymentId);
             if (payment == null)
                 return null;
 
@@ -37,10 +44,7 @@ namespace PaymentTracker.Services
 
         public async Task<PaymentHistoryResponse> GetUserPaymentHistoryAsync(int userId)
         {
-            var payments = await _context.Payments
-                .Where(p => p.UserId == userId)
-                .OrderByDescending(p => p.PaymentDate)
-                .ToListAsync();
+            var payments = await _paymentRepository.GetByUserIdAsync(userId);
 
             var totalPaid = payments.Sum(p => p.Amount);
             var paymentResponses = payments.Select(MapToResponse).ToList();
@@ -55,17 +59,14 @@ namespace PaymentTracker.Services
 
         public async Task<List<PaymentResponse>> GetAllPaymentsAsync()
         {
-            var payments = await _context.Payments
-                .OrderByDescending(p => p.PaymentDate)
-                .ToListAsync();
+            var payments = await _paymentRepository.GetAllAsync();
 
             return payments.Select(MapToResponse).ToList();
         }
 
         public async Task<PaymentResponse> AddPaymentAsync(int userId, CreatePaymentRequest request)
         {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            if (!await _userRepository.ExistsByIdAsync(userId))
                 throw new InvalidOperationException("User not found");
 
             var payment = new Payment
@@ -77,10 +78,9 @@ namespace PaymentTracker.Services
                 ReferenceNumber = request.ReferenceNumber
             };
 
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
+            await _paymentRepository.AddAsync(payment);
+            await _paymentRepository.SaveChangesAsync();
 
-            // Update balance
             await UpdateUserBalanceAsync(userId);
 
             return MapToResponse(payment);
@@ -88,7 +88,7 @@ namespace PaymentTracker.Services
 
         public async Task<PaymentResponse?> UpdatePaymentAsync(int paymentId, UpdatePaymentRequest request)
         {
-            var payment = await _context.Payments.FindAsync(paymentId);
+            var payment = await _paymentRepository.GetByIdAsync(paymentId, tracking: true);
             if (payment == null)
                 return null;
 
@@ -105,9 +105,8 @@ namespace PaymentTracker.Services
                 payment.ReferenceNumber = request.ReferenceNumber;
 
             payment.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _paymentRepository.SaveChangesAsync();
 
-            // Update balance
             await UpdateUserBalanceAsync(payment.UserId);
 
             return MapToResponse(payment);
@@ -115,15 +114,14 @@ namespace PaymentTracker.Services
 
         public async Task<bool> DeletePaymentAsync(int paymentId)
         {
-            var payment = await _context.Payments.FindAsync(paymentId);
+            var payment = await _paymentRepository.GetByIdAsync(paymentId, tracking: true);
             if (payment == null)
                 return false;
 
             var userId = payment.UserId;
-            _context.Payments.Remove(payment);
-            await _context.SaveChangesAsync();
+            _paymentRepository.Remove(payment);
+            await _paymentRepository.SaveChangesAsync();
 
-            // Update balance
             await UpdateUserBalanceAsync(userId);
 
             return true;
@@ -131,17 +129,10 @@ namespace PaymentTracker.Services
 
         public async Task<bool> ClearUserPaymentsAsync(int userId)
         {
-            var payments = await _context.Payments
-                .Where(p => p.UserId == userId)
-                .ToListAsync();
-
-            if (payments.Count == 0)
+            var removedCount = await _paymentRepository.RemoveByUserIdAsync(userId);
+            if (removedCount == 0)
                 return false;
 
-            _context.Payments.RemoveRange(payments);
-            await _context.SaveChangesAsync();
-
-            // Reset balance
             await UpdateUserBalanceAsync(userId);
 
             return true;
@@ -149,17 +140,15 @@ namespace PaymentTracker.Services
 
         public async Task UpdateUserBalanceAsync(int userId)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
+            var account = await _accountRepository.GetByUserIdAsync(userId, tracking: true);
             if (account == null)
                 return;
 
-            var totalPaid = await _context.Payments
-                .Where(p => p.UserId == userId)
-                .SumAsync(p => p.Amount);
+            var totalPaid = await _paymentRepository.SumByUserIdAsync(userId);
 
             account.Balance = totalPaid;
             account.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
         }
 
         private static PaymentResponse MapToResponse(Payment payment)

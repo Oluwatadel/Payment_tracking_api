@@ -1,8 +1,8 @@
-using PaymentTracker.Data;
+using BC = BCrypt.Net.BCrypt;
+using Microsoft.EntityFrameworkCore;
 using PaymentTracker.DTOs;
 using PaymentTracker.Models;
-using Microsoft.EntityFrameworkCore;
-using BC = BCrypt.Net.BCrypt;
+using PaymentTracker.Repositories;
 
 namespace PaymentTracker.Services
 {
@@ -19,18 +19,18 @@ namespace PaymentTracker.Services
 
     public class UserService : IUserService
     {
-        private readonly AppDbContext _context;
+        private readonly IUserRepository _userRepository;
         private readonly IJwtService _jwtService;
 
-        public UserService(AppDbContext context, IJwtService jwtService)
+        public UserService(IUserRepository userRepository, IJwtService jwtService)
         {
-            _context = context;
+            _userRepository = userRepository;
             _jwtService = jwtService;
         }
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _userRepository.GetByUsernameAsync(request.Username);
             if (user == null)
                 return null;
 
@@ -49,32 +49,28 @@ namespace PaymentTracker.Services
 
         public async Task<User?> GetUserByIdAsync(int userId)
         {
-            return await _context.Users
-                .Include(u => u.Account)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            return await _userRepository.GetByIdAsync(userId);
         }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
-            return await _context.Users
-                .Include(u => u.Account)
-                .FirstOrDefaultAsync(u => u.Username == username);
+            return await _userRepository.GetByUsernameAsync(username);
         }
 
         public async Task<List<User>> GetAllUsersAsync()
         {
-            return await _context.Users
-                .Include(u => u.Account)
-                .ToListAsync();
+            return await _userRepository.GetAllAsync();
         }
 
         public async Task<User> CreateUserAsync(CreateUserRequest request)
         {
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == request.Username || u.PhoneNumber == request.PhoneNumber);
+            var hasUsername = await _userRepository.ExistsByUsernameAsync(request.Username);
+            if (hasUsername)
+                throw new InvalidOperationException("Username already exists");
 
-            if (existingUser != null)
-                throw new InvalidOperationException("Username or phone number already exists");
+            var hasPhone = await _userRepository.ExistsByPhoneNumberAsync(request.PhoneNumber);
+            if (hasPhone)
+                throw new InvalidOperationException("Phone number already exists");
 
             var user = new User
             {
@@ -84,32 +80,28 @@ namespace PaymentTracker.Services
                 Role = UserRole.User
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
 
             return user;
         }
 
         public async Task<User?> UpdateUserAsync(int userId, UpdateUserRequest request)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, tracking: true);
             if (user == null)
                 return null;
 
             if (!string.IsNullOrEmpty(request.Username))
             {
-                var existingUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Username == request.Username && u.Id != userId);
-                if (existingUser != null)
+                if (await _userRepository.ExistsByUsernameAsync(request.Username, userId))
                     throw new InvalidOperationException("Username already exists");
                 user.Username = request.Username;
             }
 
             if (!string.IsNullOrEmpty(request.PhoneNumber))
             {
-                var existingPhone = await _context.Users
-                    .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber && u.Id != userId);
-                if (existingPhone != null)
+                if (await _userRepository.ExistsByPhoneNumberAsync(request.PhoneNumber, userId))
                     throw new InvalidOperationException("Phone number already exists");
                 user.PhoneNumber = request.PhoneNumber;
             }
@@ -120,19 +112,19 @@ namespace PaymentTracker.Services
             }
 
             user.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
 
             return user;
         }
 
         public async Task<bool> DeleteUserAsync(int userId)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, tracking: true);
             if (user == null)
                 return false;
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            _userRepository.Remove(user);
+            await _userRepository.SaveChangesAsync();
             return true;
         }
     }

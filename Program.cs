@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PaymentTracker.Data;
+using PaymentTracker.Repositories;
 using PaymentTracker.Services;
 using PaymentTracker.Middleware;
 
@@ -24,6 +25,10 @@ builder.Configuration
 // Add services to the container
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(databaseUrl));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
