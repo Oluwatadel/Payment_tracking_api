@@ -20,16 +20,15 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy published app from builder
 COPY --from=builder /app/publish .
 
-# Expose port
+# Expose port (default)
 EXPOSE 5000
 
-# Health check
+# Health check — use PORT env var if present (fallback to 5000)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
 
 # Set environment
-ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-# Run the application
-ENTRYPOINT ["dotnet", "PaymentTracker.dll"]
+# Let the runtime provide the PORT; fallback to 5000. Start app listening on that port.
+ENTRYPOINT ["sh", "-c", "dotnet PaymentTracker.dll --urls http://0.0.0.0:${PORT:-5000}"]

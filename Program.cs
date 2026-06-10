@@ -8,7 +8,7 @@ using dotenv.net;
 using System.Text;
 
 // Load environment variables from .env file
-DotEnv.Load();
+//DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
