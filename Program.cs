@@ -178,11 +178,12 @@ app.MapControllers();
 // Run migrations on startup
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    await DbSeeder.SeedAdminAsync(dbContext, configuration);
+    await DbSeeder.SeedAdminAsync(dbContext, configuration, logger);
 }
 
 app.Run();
