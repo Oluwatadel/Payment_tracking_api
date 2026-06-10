@@ -156,11 +156,23 @@ if (!app.Environment.IsProduction())
     });
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in development; Render handles HTTPS at load balancer
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add a root endpoint that redirects to Swagger docs
+app.MapGet("/", () => Results.Redirect("/swagger/index.html", permanent: false));
+
+// Add a health check endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 app.MapControllers();
 
 // Run migrations on startup
