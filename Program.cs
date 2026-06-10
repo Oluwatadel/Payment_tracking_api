@@ -146,7 +146,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Enable Swagger in production (optional - for debugging)
-if (!app.Environment.IsProduction())
+if (!app.Environment.IsProduction() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
