@@ -8,7 +8,7 @@ namespace PaymentTracker.Models
         /// <summary>
         /// Gets or sets the owning user's identifier.
         /// </summary>
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the bank name.
@@ -28,12 +28,24 @@ namespace PaymentTracker.Models
         /// <summary>
         /// Gets or sets the current account balance.
         /// </summary>
-        public decimal Balance { get; set; } = 0;
+        public decimal Balance { get; private set; } = 0;
 
         // Navigation properties
         /// <summary>
         /// Gets or sets the related user entity.
         /// </summary>
         public User? User { get; set; }
+
+        public decimal AddPaymentToBalance(decimal amount)
+        {
+            Balance += amount;
+            return Balance;
+        }
+
+        public decimal DeductPaymentFromBalance(decimal amount)
+        {
+            return Balance -= amount;
+        }
+
     }
 }

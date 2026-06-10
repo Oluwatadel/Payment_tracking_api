@@ -8,7 +8,7 @@ namespace PaymentTracker.DTOs
 
     public class LoginResponse
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public required string Username { get; set; }
         public required string Token { get; set; }
         public required string Role { get; set; }
@@ -30,7 +30,7 @@ namespace PaymentTracker.DTOs
 
     public class UserProfileResponse
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public required string Username { get; set; }
         public required string PhoneNumber { get; set; }
         public required string Role { get; set; }

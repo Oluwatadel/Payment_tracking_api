@@ -3,17 +3,14 @@ namespace PaymentTracker.Models
     /// <summary>
     /// Represents a payment made by a user.
     /// </summary>
-    public class Payment
+    public class Payment : Auditable
     {
-        /// <summary>
-        /// Gets or sets the payment identifier.
-        /// </summary>
-        public int Id { get; set; }
+        
 
         /// <summary>
         /// Gets or sets the owning user's identifier.
         /// </summary>
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the payment amount.
@@ -34,16 +31,6 @@ namespace PaymentTracker.Models
         /// Gets or sets the optional payment reference number.
         /// </summary>
         public string? ReferenceNumber { get; set; }
-
-        /// <summary>
-        /// Gets or sets the UTC timestamp when the payment was created.
-        /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// Gets or sets the UTC timestamp when the payment was last updated.
-        /// </summary>
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
         /// <summary>

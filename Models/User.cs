@@ -19,12 +19,11 @@ namespace PaymentTracker.Models
     /// <summary>
     /// Represents an application user and their profile details.
     /// </summary>
-    public class User
+    public class User :Auditable
     {
         /// <summary>
         /// Gets or sets the user's identifier.
         /// </summary>
-        public int Id { get; set; }
 
         /// <summary>
         /// Gets or sets the user's username.
@@ -45,16 +44,6 @@ namespace PaymentTracker.Models
         /// Gets or sets the user's role.
         /// </summary>
         public UserRole Role { get; set; } = UserRole.User;
-
-        /// <summary>
-        /// Gets or sets the UTC timestamp when the user was created.
-        /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// Gets or sets the UTC timestamp when the user was last updated.
-        /// </summary>
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Gets or sets the related account entity.

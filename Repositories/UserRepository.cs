@@ -6,12 +6,12 @@ namespace PaymentTracker.Repositories
 {
     public interface IUserRepository
     {
-        Task<User?> GetByIdAsync(int userId, bool tracking = false);
+        Task<User?> GetByIdAsync(Guid userId, bool tracking = false);
         Task<User?> GetByUsernameAsync(string username, bool tracking = false);
         Task<List<User>> GetAllAsync();
-        Task<bool> ExistsByIdAsync(int userId);
-        Task<bool> ExistsByUsernameAsync(string username, int? excludedUserId = null);
-        Task<bool> ExistsByPhoneNumberAsync(string phoneNumber, int? excludedUserId = null);
+        Task<bool> ExistsByIdAsync(Guid userId);
+        Task<bool> ExistsByUsernameAsync(string username, Guid? excludedUserId = null);
+        Task<bool> ExistsByPhoneNumberAsync(string phoneNumber, Guid? excludedUserId = null);
         Task AddAsync(User user);
         void Remove(User user);
         Task<int> SaveChangesAsync();
@@ -26,7 +26,7 @@ namespace PaymentTracker.Repositories
             _context = context;
         }
 
-        public async Task<User?> GetByIdAsync(int userId, bool tracking = false)
+        public async Task<User?> GetByIdAsync(Guid userId, bool tracking = false)
         {
             var query = _context.Users.AsQueryable();
             if (!tracking)
@@ -52,19 +52,19 @@ namespace PaymentTracker.Repositories
                 .ToListAsync();
         }
 
-        public Task<bool> ExistsByIdAsync(int userId)
+        public Task<bool> ExistsByIdAsync(Guid userId)
         {
             return _context.Users.AnyAsync(u => u.Id == userId);
         }
 
-        public Task<bool> ExistsByUsernameAsync(string username, int? excludedUserId = null)
+        public Task<bool> ExistsByUsernameAsync(string username, Guid? excludedUserId = null)
         {
             return _context.Users.AnyAsync(u =>
                 u.Username == username &&
                 (!excludedUserId.HasValue || u.Id != excludedUserId.Value));
         }
 
-        public Task<bool> ExistsByPhoneNumberAsync(string phoneNumber, int? excludedUserId = null)
+        public Task<bool> ExistsByPhoneNumberAsync(string phoneNumber, Guid? excludedUserId = null)
         {
             return _context.Users.AnyAsync(u =>
                 u.PhoneNumber == phoneNumber &&

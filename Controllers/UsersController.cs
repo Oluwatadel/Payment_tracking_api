@@ -24,10 +24,10 @@ namespace PaymentTracker.Controllers
             _paymentService = paymentService;
         }
 
-        private int? GetCurrentUserId()
+        private Guid? GetCurrentUserId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return claim != null && int.TryParse(claim.Value, out var userId) ? userId : null;
+            return claim != null && Guid.TryParse(claim.Value, out var userId) ? userId : null;
         }
 
         private string? GetCurrentUserRole()
@@ -249,7 +249,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Get specific user
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserProfileResponse>> GetUser(int id)
+        public async Task<ActionResult<UserProfileResponse>> GetUser(Guid id)
         {
             try
             {
@@ -277,7 +277,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Update user
         [HttpPut("{id}")]
-        public async Task<ActionResult<UserProfileResponse>> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+        public async Task<ActionResult<UserProfileResponse>> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)
         {
             try
             {
@@ -305,7 +305,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Delete user
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(Guid id)
         {
             try
             {

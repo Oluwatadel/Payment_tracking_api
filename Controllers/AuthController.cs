@@ -63,7 +63,7 @@ namespace PaymentTracker.Controllers
             try
             {
                 var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
                     return Unauthorized("User not authenticated");
 
                 var user = await _userService.GetUserByIdAsync(userId);

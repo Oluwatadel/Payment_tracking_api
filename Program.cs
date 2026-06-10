@@ -1,16 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PaymentTracker.Data;
 using PaymentTracker.Repositories;
 using PaymentTracker.Services;
-using PaymentTracker.Middleware;
+using dotenv.net;
+using System.Text;
 
 // Load environment variables from .env file
-// DotEnv.Load();
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
     ?? "your-super-secret-jwt-key-please-change-in-production";
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? "Server=localhost;Database=payment_tracker;User Id=postgres;Password=postgres;";
@@ -48,6 +51,26 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = "PaymentTracker",
+        ValidAudience = "PaymentTrackerUsers",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // Add enhanced Swagger/OpenAPI documentation
 builder.Services.AddSwaggerGen(options =>
@@ -72,8 +95,8 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
@@ -105,7 +128,6 @@ builder.Services.AddSwaggerGen(options =>
     // Remove or comment out the following line, as the type does not exist and is not required for standard JWT Swagger setup:
     // options.OperationFilter<Microsoft.AspNetCore.OpenApi.OpenApiSecuritySchemeNameOpenApiOperationFilter>();
 });
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -137,9 +159,7 @@ if (!app.Environment.IsProduction())
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
-// Use JWT middleware
-app.UseMiddleware<JwtMiddleware>();
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -148,6 +168,9 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
+
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    await DbSeeder.SeedAdminAsync(dbContext, configuration);
 }
 
 app.Run();

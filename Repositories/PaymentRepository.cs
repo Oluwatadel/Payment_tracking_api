@@ -6,16 +6,16 @@ namespace PaymentTracker.Repositories
 {
     public interface IPaymentRepository
     {
-        Task<Payment?> GetByIdAsync(int paymentId, bool tracking = false);
+        Task<Payment?> GetByIdAsync(Guid paymentId, bool tracking = false);
         Task<List<Payment>> SearchPaymentsAsync(DateTime? startDate, DateTime? endDate, decimal? minAmount, decimal? maxAmount);
-        Task<List<Payment>> GetByUserIdAsync(int userId);
+        Task<List<Payment>> GetByUserIdAsync(Guid userId);
         Task<List<Payment>> GetAllAsync();
-        Task<decimal> SumByUserIdAsync(int userId);
-        Task<bool> ExistsByIdAsync(int paymentId);
+        Task<decimal> SumByUserIdAsync(Guid userId);
+        Task<bool> ExistsByIdAsync(Guid paymentId);
         Task AddAsync(Payment payment);
         void Remove(Payment payment);
         void RemoveRange(IEnumerable<Payment> payments);
-        Task<int> RemoveByUserIdAsync(int userId);
+        Task<int> RemoveByUserIdAsync(Guid userId);
         Task<int> SaveChangesAsync();
     }
 
@@ -28,7 +28,7 @@ namespace PaymentTracker.Repositories
             _context = context;
         }
 
-        public async Task<Payment?> GetByIdAsync(int paymentId, bool tracking = false)
+        public async Task<Payment?> GetByIdAsync(Guid paymentId, bool tracking = false)
         {
             var query = _context.Payments.AsQueryable();
             if (!tracking)
@@ -37,7 +37,7 @@ namespace PaymentTracker.Repositories
             return await query.FirstOrDefaultAsync(p => p.Id == paymentId);
         }
 
-        public async Task<List<Payment>> GetByUserIdAsync(int userId)
+        public async Task<List<Payment>> GetByUserIdAsync(Guid userId)
         {
             return await _context.Payments
                 .AsNoTracking()
@@ -54,7 +54,7 @@ namespace PaymentTracker.Repositories
                 .ToListAsync();
         }
 
-        public async Task<decimal> SumByUserIdAsync(int userId)
+        public async Task<decimal> SumByUserIdAsync(Guid userId)
         {
             var total = await _context.Payments
                 .Where(p => p.UserId == userId)
@@ -64,7 +64,7 @@ namespace PaymentTracker.Repositories
             return total ?? 0m;
         }
 
-        public Task<bool> ExistsByIdAsync(int paymentId)
+        public Task<bool> ExistsByIdAsync(Guid paymentId)
         {
             return _context.Payments.AnyAsync(p => p.Id == paymentId);
         }
@@ -84,7 +84,7 @@ namespace PaymentTracker.Repositories
             _context.Payments.RemoveRange(payments);
         }
 
-        public Task<int> RemoveByUserIdAsync(int userId)
+        public Task<int> RemoveByUserIdAsync(Guid userId)
         {
             return _context.Payments
                 .Where(p => p.UserId == userId)

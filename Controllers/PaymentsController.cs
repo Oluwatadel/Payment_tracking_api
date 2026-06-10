@@ -53,7 +53,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Get specific payment
         [HttpGet("{id}")]
-        public async Task<ActionResult<PaymentResponse>> GetPayment(int id)
+        public async Task<ActionResult<PaymentResponse>> GetPayment(Guid id)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Add payment for a user
         [HttpPost("user/{userId}")]
-        public async Task<ActionResult<PaymentResponse>> AddPaymentForUser(int userId, [FromBody] CreatePaymentRequest request)
+        public async Task<ActionResult<PaymentResponse>> AddPaymentForUser(Guid userId, [FromBody] CreatePaymentRequest request)
         {
             try
             {
@@ -94,7 +94,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Update payment
         [HttpPut("{id}")]
-        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, [FromBody] UpdatePaymentRequest request)
+        public async Task<ActionResult<PaymentResponse>> UpdatePayment(Guid id, [FromBody] UpdatePaymentRequest request)
         {
             try
             {
@@ -116,7 +116,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Delete payment
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePayment(int id)
+        public async Task<IActionResult> DeletePayment(Guid id)
         {
             try
             {
@@ -138,7 +138,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Clear user payments
         [HttpPost("user/{userId}/clear")]
-        public async Task<IActionResult> ClearUserPayments(int userId)
+        public async Task<IActionResult> ClearUserPayments(Guid userId)
         {
             try
             {

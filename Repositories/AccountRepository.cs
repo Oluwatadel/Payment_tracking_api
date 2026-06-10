@@ -6,11 +6,13 @@ namespace PaymentTracker.Repositories
 {
     public interface IAccountRepository
     {
-        Task<Account?> GetByUserIdAsync(int userId, bool tracking = false);
-        Task<bool> ExistsByUserIdAsync(int userId);
+        Task<Account?> GetByUserIdAsync(Guid userId, bool tracking = false);
+        Task<bool> ExistsByUserIdAsync(Guid userId);
         Task AddAsync(Account account);
         void Remove(Account account);
         Task<int> SaveChangesAsync();
+        Task<Account> GetAdminAccount();
+        void Update(Account account);
     }
 
     public class AccountRepository : IAccountRepository
@@ -22,7 +24,7 @@ namespace PaymentTracker.Repositories
             _context = context;
         }
 
-        public async Task<Account?> GetByUserIdAsync(int userId, bool tracking = false)
+        public async Task<Account?> GetByUserIdAsync(Guid userId, bool tracking = false)
         {
             var query = _context.Accounts.AsQueryable();
             if (!tracking)
@@ -31,7 +33,7 @@ namespace PaymentTracker.Repositories
             return await query.FirstOrDefaultAsync(a => a.UserId == userId);
         }
 
-        public Task<bool> ExistsByUserIdAsync(int userId)
+        public Task<bool> ExistsByUserIdAsync(Guid userId)
         {
             return _context.Accounts.AnyAsync(a => a.UserId == userId);
         }
@@ -41,6 +43,11 @@ namespace PaymentTracker.Repositories
             return _context.Accounts.AddAsync(account).AsTask();
         }
 
+        public async Task<Account> GetAdminAccount()
+        {
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.User!.Role == UserRole.Admin);
+            return account!;
+        }
         public void Remove(Account account)
         {
             _context.Accounts.Remove(account);
@@ -49,6 +56,11 @@ namespace PaymentTracker.Repositories
         public Task<int> SaveChangesAsync()
         {
             return _context.SaveChangesAsync();
+        }
+
+        public void Update(Account account)
+        {
+            _context.Accounts.Update(account);
         }
     }
 }
