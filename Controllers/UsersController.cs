@@ -197,6 +197,7 @@ namespace PaymentTracker.Controllers
 
         // Admin: Get all users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserProfileResponse>>> GetAllUsers()
         {
             try
