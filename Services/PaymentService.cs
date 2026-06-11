@@ -10,6 +10,7 @@ namespace PaymentTracker.Services
         Task<PaymentResponse> GetPaymentByIdAsync(Guid paymentId);
         Task<PaymentHistoryResponse> GetUserPaymentHistoryAsync(Guid userId);
         Task<List<PaymentResponse>> GetAllPaymentsAsync();
+        Task<List<PaymentResponse>> GetUserPaymentsAsync(Guid userId);
         Task<PaymentResponse> AddPaymentAsync(Guid userId, CreatePaymentRequest request);
         Task<PaymentResponse> UpdatePaymentAsync(Guid paymentId, UpdatePaymentRequest request);
         Task<bool> DeletePaymentAsync(Guid paymentId);
@@ -80,10 +81,19 @@ namespace PaymentTracker.Services
             return payments.Select(MapToResponse).ToList();
         }
 
+        public async Task<List<PaymentResponse>> GetUserPaymentsAsync(Guid userId)
+        {
+            _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
+            _logger.LogInformation("Fetching all payments for user {UserId}", userId);
+            var payments = await _paymentRepository.GetByUserIdAsync(userId);
+            _logger.LogInformation($"Total payments found for user {userId}: {payments.Count} with sum {payments.Sum(p => p.Amount)}");
+            return payments.Select(MapToResponse).ToList();
+        }
+
         public async Task<PaymentResponse> AddPaymentAsync(Guid userId, CreatePaymentRequest request)
         {
-                _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-                _logger.LogInformation("Creating payment for user {UserId}", userId);
+            _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
+            _logger.LogInformation("Creating payment for user {UserId}", userId);
 
             if (!await _userRepository.ExistsByIdAsync(userId))
             {

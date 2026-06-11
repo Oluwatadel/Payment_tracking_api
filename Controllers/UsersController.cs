@@ -275,6 +275,41 @@ namespace PaymentTracker.Controllers
             }
         }
 
+        // Admin: Get specific user's account
+        [HttpGet("{id}/account")]
+        public async Task<ActionResult<AccountResponse>> GetUserAccount(Guid id)
+        {
+            try
+            {
+                var role = GetCurrentUserRole();
+                if (role != "Admin")
+                    return Forbid();
+
+                // Verify user exists
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user == null)
+                    return NotFound("User not found");
+
+                var account = await _accountService.GetAccountByUserIdAsync(id);
+                if (account == null)
+                    return NotFound("Account not found for this user");
+
+                return Ok(new AccountResponse
+                {
+                    Id = account.Id,
+                    UserId = account.UserId,
+                    BankName = account.BankName,
+                    AccountNumber = account.AccountNumber,
+                    AccountHolder = account.AccountHolder,
+                    Balance = account.Balance
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
         // Admin: Update user
         [HttpPut("{id}")]
         public async Task<ActionResult<UserProfileResponse>> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)

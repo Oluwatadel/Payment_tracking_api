@@ -66,7 +66,7 @@ namespace PaymentTracker.Services
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
             _logger.LogInformation($"Fetching user with Id: {userId}");
-            var user =  await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
@@ -82,7 +82,7 @@ namespace PaymentTracker.Services
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
             _logger.LogInformation($"Fetching user with username: {username}");
-            var user =  await _userRepository.GetByUsernameAsync(username);
+            var user = await _userRepository.GetByUsernameAsync(username);
             if (user == null)
             {
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
@@ -134,9 +134,9 @@ namespace PaymentTracker.Services
             var account = new Account
             {
                 UserId = user.Id,
-                BankName = "Default Bank",
-                AccountNumber = $"ACC-{user.Id:N}".Substring(0, 16),
-                AccountHolder = user.Username,
+                BankName = request.BankName ?? "Default Bank",
+                AccountNumber = request.AccountNo ?? "0000000000",
+                AccountHolder = request.AccountHolder,
             };
 
             user.Account = account;
@@ -145,7 +145,7 @@ namespace PaymentTracker.Services
             await _accountRepository.AddAsync(account);
             var changes = await _userRepository.SaveChangesAsync();
 
-            if(changes <= 0)
+            if (changes <= 0)
             {
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
                 _logger.LogInformation("Failed to create user");
@@ -166,7 +166,7 @@ namespace PaymentTracker.Services
             {
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
                 _logger.LogInformation("User not found");
-                 throw new NotFoundException("User not found");
+                throw new NotFoundException("User not found");
             }
 
             if (!string.IsNullOrEmpty(request.Username))
@@ -196,6 +196,35 @@ namespace PaymentTracker.Services
                 user.PasswordHash = BC.HashPassword(request.Password);
             }
 
+            if (request.AccountNo != null || request.BankName != null || request.AccountHolder != null)
+            {
+                var account = await _accountRepository.GetByUserIdAsync(userId, tracking: true);
+                if (account == null)
+                {
+                    _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
+                    _logger.LogInformation("Account not found for user");
+                    throw new NotFoundException("Account not found for user");
+                }
+                if (!string.IsNullOrEmpty(request.AccountNo))
+                {
+                    account.AccountNumber = request.AccountNo;
+                }
+                if (!string.IsNullOrEmpty(request.BankName))
+                {
+                    account.BankName = request.BankName;
+                }
+                if (!string.IsNullOrEmpty(request.AccountHolder))
+                {
+                    if (account.AccountHolder != request.AccountHolder)
+                    {
+                        _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
+                        _logger.LogInformation("Account holder must match with the profile name");
+                        throw new ConflictException("Account holder must match with the profile name");
+                    }
+                    account.AccountHolder = request.AccountHolder;
+                }
+            }
+
             user.UpdatedAt = DateTime.UtcNow;
             await _userRepository.SaveChangesAsync();
 
@@ -214,7 +243,7 @@ namespace PaymentTracker.Services
             {
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
                 _logger.LogInformation("User not found");
-                 throw new NotFoundException("User not found");
+                throw new NotFoundException("User not found");
             }
             _userRepository.Remove(user);
             await _userRepository.SaveChangesAsync();

@@ -14,10 +14,12 @@ namespace PaymentTracker.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IAccountService _accountService;
 
-        public PaymentsController(IPaymentService paymentService)
+        public PaymentsController(IPaymentService paymentService, IAccountService accountService)
         {
             _paymentService = paymentService;
+            _accountService = accountService;
         }
 
         private string? GetCurrentUserRole()
@@ -51,6 +53,15 @@ namespace PaymentTracker.Controllers
             }
         }
 
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> GetAdminAccount()
+        {
+            var role = GetCurrentUserRole();
+            var account = await _accountService.GetAdminAccount();
+            return Ok(account);
+        }
+
         // Admin: Get specific payment
         [HttpGet("{id}")]
         public async Task<ActionResult<PaymentResponse>> GetPayment(Guid id)
@@ -66,6 +77,25 @@ namespace PaymentTracker.Controllers
                     return NotFound("Payment not found");
 
                 return Ok(payment);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        // Admin: Get all payments for a specific user
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<List<PaymentResponse>>> GetUserPayments(Guid userId)
+        {
+            try
+            {
+                var role = GetCurrentUserRole();
+                if (role != "Admin")
+                    return Forbid();
+
+                var payments = await _paymentService.GetUserPaymentsAsync(userId);
+                return Ok(payments);
             }
             catch (Exception ex)
             {

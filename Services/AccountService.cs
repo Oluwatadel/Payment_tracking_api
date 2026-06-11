@@ -7,6 +7,7 @@ namespace PaymentTracker.Services
     public interface IAccountService
     {
         Task<Account> GetAccountByUserIdAsync(Guid userId);
+        Task<Account> GetAdminAccount();
         Task<Account> CreateAccountAsync(Guid userId, CreateAccountRequest request);
         Task<Account> UpdateAccountAsync(Guid userId, UpdateAccountRequest request);
     }
@@ -100,6 +101,11 @@ namespace PaymentTracker.Services
             _logger.LogInformation("Account updated for user {UserId}", userId);
 
             return account;
+        }
+
+        public Task<Account> GetAdminAccount()
+        {
+            return _accountRepository.GetAdminAccount();
         }
     }
 }
