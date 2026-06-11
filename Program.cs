@@ -8,7 +8,7 @@ using dotenv.net;
 using System.Text;
 
 // Load environment variables from .env file
-//DotEnv.Load();
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,7 +131,7 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
@@ -142,17 +142,6 @@ if (app.Environment.IsDevelopment())
         options.DefaultModelExpandDepth(2);
         options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
         options.DisplayOperationId();
-    });
-}
-
-// Enable Swagger in production (optional - for debugging)
-if (!app.Environment.IsProduction() || app.Environment.IsProduction())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Payment Tracker API v1");
-        options.RoutePrefix = "swagger";
     });
 }
 

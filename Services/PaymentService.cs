@@ -111,10 +111,14 @@ namespace PaymentTracker.Services
             };
 
             await _paymentRepository.AddAsync(payment);
-            await UpdateUserBalanceAsync(userId);
+            //await UpdateUserBalanceAsync(userId);
 
-            await _paymentRepository.SaveChangesAsync();
-
+            var changes = await _paymentRepository.SaveChangesAsync();
+            if(changes <= 0)
+            {
+                _logger.LogInformation("Error saving payment");
+                throw new SaveOperationException($"Payment for user {userId} not saved..Error!!!")
+            }
 
             _logger.LogInformation("Payment created for user {UserId}", userId);
 
