@@ -111,10 +111,16 @@ namespace PaymentTracker.Services
             };
 
             await _paymentRepository.AddAsync(payment);
+
+            
+
             //await UpdateUserBalanceAsync(userId);
+            _logger.LogInformation("Adding payment amount to admin balance");
+            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
+                ?? throw new NotFoundException("Admin account not found");
 
             var changes = await _paymentRepository.SaveChangesAsync();
-            if(changes <= 0)
+            if (changes <= 0)
             {
                 _logger.LogInformation("Error saving payment");
                 throw new SaveOperationException($"Payment for user {userId} not saved..Error!!!");
@@ -136,22 +142,29 @@ namespace PaymentTracker.Services
                 throw new KeyNotFoundException("Payment not found");
             }
 
-            if (request.Amount.HasValue)
-                payment.Amount = request.Amount.Value;
+            var previousPaymentAmount = payment.Amount;
 
-            if (request.PaymentDate.HasValue)
-                payment.PaymentDate = request.PaymentDate.Value;
+            payment.UpdatePaymentDetails(
+                amount: request.Amount,
+                paymentDate: request.PaymentDate,
+                bankName: request.BankName,
+                referenceNumber: request.ReferenceNumber
+            );
 
-            if (!string.IsNullOrEmpty(request.BankName))
-                payment.BankName = request.BankName;
+            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
+                ?? throw new NotFoundException("Admin account not found");
 
-            if (!string.IsNullOrEmpty(request.ReferenceNumber))
-                payment.ReferenceNumber = request.ReferenceNumber;
-
+            adminAccount.AddPaymentToBalance(previousPaymentAmount - payment.Amount);
             payment.UpdatedAt = DateTime.UtcNow;
-            await _paymentRepository.SaveChangesAsync();
+            var changes = await _paymentRepository.SaveChangesAsync();
 
-            await UpdateUserBalanceAsync(payment.UserId);
+            if (changes <= 0)
+            {
+                _logger.LogInformation("Error updating payment");
+                throw new SaveOperationException($"Payment {paymentId} not updated..Error!!!");
+            }
+
+            //await UpdateUserBalanceAsync(payment.UserId);
 
             _logger.LogInformation("Payment {PaymentId} updated", paymentId);
 

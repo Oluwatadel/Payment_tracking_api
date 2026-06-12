@@ -37,5 +37,17 @@ namespace PaymentTracker.Models
         /// Gets or sets the related user entity.
         /// </summary>
         public User? User { get; set; }
+
+        public void UpdatePaymentDetails(decimal? amount, DateTime? paymentDate, string? bankName, string? referenceNumber)
+        {
+            if(amount.HasValue)
+                Amount = amount.Value;
+            if(paymentDate.HasValue)
+                PaymentDate = paymentDate.Value;
+            if(!string.IsNullOrEmpty(bankName))
+                BankName = bankName;
+            if(!string.IsNullOrEmpty(referenceNumber))
+                ReferenceNumber = referenceNumber;
+        }
     }
 }

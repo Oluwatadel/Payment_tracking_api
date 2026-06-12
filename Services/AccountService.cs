@@ -103,9 +103,9 @@ namespace PaymentTracker.Services
             return account;
         }
 
-        public Task<Account> GetAdminAccount()
+        public Task<Account> GetAdminAccount(bool tracking = true)
         {
-            return _accountRepository.GetAdminAccount();
+            return _accountRepository.GetAdminAccount(tracking);
         }
     }
 }

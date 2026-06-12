@@ -11,7 +11,7 @@ namespace PaymentTracker.Repositories
         Task AddAsync(Account account);
         void Remove(Account account);
         Task<int> SaveChangesAsync();
-        Task<Account> GetAdminAccount();
+        Task<Account> GetAdminAccount(bool tracking = true);
         void Update(Account account);
     }
 
@@ -43,9 +43,13 @@ namespace PaymentTracker.Repositories
             return _context.Accounts.AddAsync(account).AsTask();
         }
 
-        public async Task<Account> GetAdminAccount()
+        public async Task<Account> GetAdminAccount(bool tracking = true)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.User!.Role == UserRole.Admin);
+            var query = _context.Accounts.AsQueryable();
+            if (!tracking)
+                query = query.AsNoTracking();
+
+            var account = await query.FirstOrDefaultAsync(a => a.User!.Role == UserRole.Admin);
             return account!;
         }
         public void Remove(Account account)
