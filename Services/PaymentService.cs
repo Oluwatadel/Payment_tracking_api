@@ -117,7 +117,7 @@ namespace PaymentTracker.Services
             if(changes <= 0)
             {
                 _logger.LogInformation("Error saving payment");
-                throw new SaveOperationException($"Payment for user {userId} not saved..Error!!!")
+                throw new SaveOperationException($"Payment for user {userId} not saved..Error!!!");
             }
 
             _logger.LogInformation("Payment created for user {UserId}", userId);
