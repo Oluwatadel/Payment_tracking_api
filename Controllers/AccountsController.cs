@@ -16,9 +16,9 @@ namespace PaymentTracker.Controllers
             _accountService = accountService;
         }
 
-        [HttpGet("{id: uid}")]
+        [HttpGet("{id}")]
         [Authorize]
-        public async Task<IActionResult> GetAccountByUserId(Guid id)
+        public async Task<IActionResult> GetAccountByUserId([FromRoute] Guid id)
         {
             var account = await _accountService.GetAccountByUserIdAsync(id);
              return Ok(account);
