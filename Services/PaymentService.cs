@@ -25,16 +25,19 @@ namespace PaymentTracker.Services
         private readonly IUserRepository _userRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly ILogger<PaymentService> _logger;
+        private readonly IUnitOfWork _uniOfWork;
 
 
         public PaymentService(
             IPaymentRepository paymentRepository,
             IUserRepository userRepository,
+            IUnitOfWork unitOfWork,
             IAccountRepository accountRepository,
             ILogger<PaymentService> logger)
         {
             _paymentRepository = paymentRepository;
             _userRepository = userRepository;
+            _uniOfWork = unitOfWork;
             _accountRepository = accountRepository;
             _logger = logger;
         }
@@ -128,7 +131,10 @@ namespace PaymentTracker.Services
             var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
                 ?? throw new NotFoundException("Admin account not found");
 
-            var changes = await _paymentRepository.SaveChangesAsync();
+            _accountRepository.Update(adminAccount);
+
+
+            var changes = await _uniOfWork.SaveChangesAsync();
             if (changes <= 0)
             {
                 _logger.LogInformation("Error saving payment");
