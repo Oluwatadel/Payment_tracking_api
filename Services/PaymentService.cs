@@ -112,9 +112,16 @@ namespace PaymentTracker.Services
                 ReferenceNumber = request.ReferenceNumber
             };
 
-            await _paymentRepository.AddAsync(payment);
+            var userAccount = await _accountRepository.GetByUserIdAsync(userId, tracking: true)
+                ?? throw new NotFoundException("User account not found");
 
-            
+            _logger.LogInformation("Adding payment amount to user balance");
+
+            userAccount.AddPaymentToBalance(payment.Amount);
+
+            _accountRepository.Update(userAccount);
+
+            await _paymentRepository.AddAsync(payment);            
 
             //await UpdateUserBalanceAsync(userId);
             _logger.LogInformation("Adding payment amount to admin balance");
