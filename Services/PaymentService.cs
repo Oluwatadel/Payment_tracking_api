@@ -137,7 +137,7 @@ namespace PaymentTracker.Services
             var changes = await _uniOfWork.SaveChangesAsync();
             if (changes <= 0)
             {
-                _logger.LogInformation("Error saving payment");
+                _logger.LogError("Error saving payment");
                 throw new SaveOperationException($"Payment for user {userId} not saved..Error!!!");
             }
 
