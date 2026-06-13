@@ -154,7 +154,7 @@ namespace PaymentTracker.Services
             }
             _accountRepository.Update(admin);
             var changes = await _unitOfwork.SaveChangesAsync();
-            if (changes >= 0)
+            if (changes <= 0)
             {
                 _logger.LogInformation("Admin account reconciled successfully.");
                 throw new SaveOperationException("Admin account reconciled successfully.");

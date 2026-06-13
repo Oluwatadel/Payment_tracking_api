@@ -18,13 +18,13 @@ namespace PaymentTracker.Data
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while(stoppingToken.IsCancellationRequested)
+            while(!stoppingToken.IsCancellationRequested)
             {
-                var now  = TimeZoneInfo.ConvertTime(DateTime.UtcNow, timeZoneInfo);
-                var nextRunTime = new DateTime(now.Year, now.Month, now.Day).AddHours(5); // Next 5hours
-                var delay = nextRunTime - now;
-                _logger.LogInformation("Daily reconciliation will run at {NextRunTime} (in {Delay})", nextRunTime, delay);
-                await Task.Delay(delay, stoppingToken);
+                //var now  = TimeZoneInfo.ConvertTime(DateTime.UtcNow, timeZoneInfo);
+                //var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 5, 0, 0); // Next 5hours
+                //var delay = nextRunTime - now;
+                //_logger.LogInformation("Daily reconciliation will run at {NextRunTime} (in {Delay})", nextRunTime, delay);
+                //await Task.Delay(delay, stoppingToken);
 
 
                 using var scope = _serviceScopeFactory.CreateScope();
@@ -37,10 +37,13 @@ namespace PaymentTracker.Data
                 {
                     _logger.LogWarning("Admin account balance is negative: {Balance}. Reconciliation will proceed.", adminAccount.Balance);
                     await accountService.ReconcileAdminAccount(stoppingToken);
-                    return;
+                    continue;
                 }
                 await accountService.ReconcileAdminAccount(stoppingToken);
                 _logger.LogInformation("Reconciliation completed at {Time}", DateTime.UtcNow);
+
+                _logger.LogInformation("Reconciliation will run at {NextRunTime}", DateTime.UtcNow.AddHours(5));
+                await Task.Delay(TimeSpan.FromHours(5), stoppingToken);
             }
         }
     }

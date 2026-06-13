@@ -9,7 +9,7 @@ using System.Text;
 using PaymentTracker.Models;
 
 // Load environment variables from .env file
-//DotEnv.Load();
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
