@@ -6,6 +6,7 @@ using PaymentTracker.Repositories;
 using PaymentTracker.Services;
 using dotenv.net;
 using System.Text;
+using PaymentTracker.Models;
 
 // Load environment variables from .env file
 //DotEnv.Load();
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IUnitOfWork,UnitOfWork>();
 builder.Services.AddHostedService<DailyReconciliationService>();
 
 // Add CORS
