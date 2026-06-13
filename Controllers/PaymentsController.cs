@@ -58,7 +58,7 @@ namespace PaymentTracker.Controllers
         public async Task<ActionResult> GetAdminAccount()
         {
             var role = GetCurrentUserRole();
-            var account = await _accountService.GetAdminAccount();
+            var account = await _accountService.GetAdminAccount(false);
             return Ok(account);
         }
 
