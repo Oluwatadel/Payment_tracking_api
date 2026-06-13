@@ -8,7 +8,7 @@ using dotenv.net;
 using System.Text;
 
 // Load environment variables from .env file
-DotEnv.Load();
+//DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +37,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddHostedService<DailyReconciliationService>();
 
 // Add CORS
 builder.Services.AddCors(options =>

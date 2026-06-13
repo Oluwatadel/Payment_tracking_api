@@ -1,5 +1,6 @@
-using PaymentTracker.Exceptions;
+using PaymentTracker.Data;
 using PaymentTracker.DTOs;
+using PaymentTracker.Exceptions;
 using PaymentTracker.Models;
 using PaymentTracker.Repositories;
 
@@ -24,6 +25,7 @@ namespace PaymentTracker.Services
         private readonly IUserRepository _userRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly ILogger<PaymentService> _logger;
+
 
         public PaymentService(
             IPaymentRepository paymentRepository,
@@ -234,6 +236,7 @@ namespace PaymentTracker.Services
             await _accountRepository.SaveChangesAsync();
             _logger.LogInformation("Balance updated for user {UserId}", userId);
         }
+
 
         private static PaymentResponse MapToResponse(Payment payment)
         {

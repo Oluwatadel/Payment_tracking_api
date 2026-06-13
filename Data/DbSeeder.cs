@@ -6,23 +6,22 @@ namespace PaymentTracker.Data
 {
     public static class DbSeeder
     {
-public static async Task SeedAdminAsync(AppDbContext context, IConfiguration configuration, ILogger logger)
-    {
-        var adminUsername = configuration["ADMIN_USERNAME"];
-        var adminPhone = configuration["ADMIN_PHONE"];
-        var adminPassword = configuration["ADMIN_PASSWORD"];
-
-        if (string.IsNullOrWhiteSpace(adminUsername) ||
-            string.IsNullOrWhiteSpace(adminPhone) ||
-            string.IsNullOrWhiteSpace(adminPassword))
+        public static async Task SeedAdminAsync(AppDbContext context, IConfiguration configuration, ILogger logger)
         {
-            logger.LogWarning("Admin seed skipped because one or more required environment variables are missing: ADMIN_USERNAME, ADMIN_PHONE, ADMIN_PASSWORD.");
-                return;
-            }
+            var adminUsername = configuration["ADMIN_USERNAME"];
+            var adminPhone = configuration["ADMIN_PHONE"];
+            var adminPassword = configuration["ADMIN_PASSWORD"];
 
+            if (string.IsNullOrWhiteSpace(adminUsername) ||
+                string.IsNullOrWhiteSpace(adminPhone) ||
+                string.IsNullOrWhiteSpace(adminPassword))
+            {
+                logger.LogWarning("Admin seed skipped because one or more required environment variables are missing: ADMIN_USERNAME, ADMIN_PHONE, ADMIN_PASSWORD.");
+                    return;
+            }
             var admin = await context.Users
-                .Include(u => u.Account)
-                .FirstOrDefaultAsync(u => u.Username == adminUsername || u.PhoneNumber == adminPhone);
+                   .Include(u => u.Account)
+                   .FirstOrDefaultAsync(u => u.Username == adminUsername || u.PhoneNumber == adminPhone);
 
             if (admin == null)
             {
@@ -82,5 +81,7 @@ public static async Task SeedAdminAsync(AppDbContext context, IConfiguration con
             if (changed)
                 await context.SaveChangesAsync();
         }
-    }
+
+    }   
+
 }
