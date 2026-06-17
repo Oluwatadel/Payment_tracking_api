@@ -12,10 +12,15 @@ namespace PaymentTracker.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Notification configuration
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => n.ExpiresAt);
 
             // User configuration
             modelBuilder.Entity<User>()
