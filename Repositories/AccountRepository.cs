@@ -45,11 +45,13 @@ namespace PaymentTracker.Repositories
 
         public async Task<Account> GetAdminAccount(bool tracking = true)
         {
-            var query = _context.Accounts.AsQueryable();
-            if (!tracking)
+            var query = from acc in _context.Accounts
+                        join user in _context.Users on UserRole.Admin equals user.Role
+                        select acc;
+            if(tracking)
                 query = query.AsNoTracking();
 
-            var account = await query.FirstOrDefaultAsync(a => a.User!.Role == UserRole.Admin);
+            var account = await query.FirstOrDefaultAsync();
             return account!;
         }
         public void Remove(Account account)

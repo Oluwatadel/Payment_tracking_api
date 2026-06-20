@@ -30,12 +30,6 @@ namespace PaymentTracker.Models
         /// </summary>
         public decimal Balance { get; private set; } = 0;
 
-        // Navigation properties
-        /// <summary>
-        /// Gets or sets the related user entity.
-        /// </summary>
-        public User? User { get; set; }
-
         public decimal AddPaymentToBalance(decimal amount)
         {
             Balance += amount;

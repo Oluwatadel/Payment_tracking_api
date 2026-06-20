@@ -31,11 +31,11 @@ namespace PaymentTracker.Data
                 .HasIndex(u => u.PhoneNumber)
                 .IsUnique();
 
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Account)
-                .WithOne(a => a.User)
-                .HasForeignKey<Account>(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //modelBuilder.Entity<User>()
+            //    .HasOne(u => u.Account)
+            //    .WithOne(a => a.User)
+            //    .HasForeignKey<Account>(a => a.UserId)
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             // Account configuration
             modelBuilder.Entity<Account>()

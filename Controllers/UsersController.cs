@@ -100,98 +100,77 @@ namespace PaymentTracker.Controllers
         }
 
         // User: Create own account
-        [HttpPost("me/account")]
-        public async Task<ActionResult<AccountResponse>> CreateCurrentUserAccount([FromBody] CreateAccountRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+        //[HttpPost("me/account")]
+        //public async Task<ActionResult<AccountResponse>> CreateCurrentUserAccount([FromBody] CreateAccountRequest request)
+        //{
+        //    try
+        //    {
+        //        var userId = GetCurrentUserId();
+        //        if (!userId.HasValue)
+        //            return Unauthorized("User not authenticated");
 
-                var account = await _accountService.CreateAccountAsync(userId.Value, request);
-                return CreatedAtAction(nameof(GetCurrentUserAccount), new AccountResponse
-                {
-                    Id = account.Id,
-                    UserId = account.UserId,
-                    BankName = account.BankName,
-                    AccountNumber = account.AccountNumber,
-                    AccountHolder = account.AccountHolder,
-                    Balance = account.Balance
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
+        //        var account = await _accountService.CreateAccountAsync(userId.Value, request);
+        //        return CreatedAtAction(nameof(GetCurrentUserAccount), new AccountResponse
+        //        {
+        //            Id = account.Id,
+        //            UserId = account.UserId,
+        //            BankName = account.BankName,
+        //            AccountNumber = account.AccountNumber,
+        //            AccountHolder = account.AccountHolder,
+        //            Balance = account.Balance
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { error = ex.Message });
+        //    }
+        //}
 
         // User: Update own account
-        [HttpPut("me/account")]
-        public async Task<ActionResult<AccountResponse>> UpdateCurrentUserAccount([FromBody] UpdateAccountRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+        //[HttpPut("me/account/update")]
+        //public async Task<ActionResult<AccountResponse>> UpdateCurrentUserAccount([FromBody] UpdateAccountRequest request)
+        //{
+        //    var userId = GetCurrentUserId();
+        //    if (!userId.HasValue)
+        //        return Unauthorized("User not authenticated");
 
-                var account = await _accountService.UpdateAccountAsync(userId.Value, request);
-                if (account == null)
-                    return NotFound("Account not found");
+        //    var account = await _accountService.UpdateAccountAsync(userId.Value, request);
+        //    if (account == null)
+        //        return NotFound("Account not found");
 
-                return Ok(new AccountResponse
-                {
-                    Id = account.Id,
-                    UserId = account.UserId,
-                    BankName = account.BankName,
-                    AccountNumber = account.AccountNumber,
-                    AccountHolder = account.AccountHolder,
-                    Balance = account.Balance
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
+        //    return Ok(new AccountResponse
+        //    {
+        //        Id = account.Id,
+        //        UserId = account.UserId,
+        //        BankName = account.BankName,
+        //        AccountNumber = account.AccountNumber,
+        //        AccountHolder = account.AccountHolder,
+        //        Balance = account.Balance
+        //    });
+        //}
 
         // User: Get own payment history
         [HttpGet("me/payments")]
         public async Task<ActionResult<PaymentHistoryResponse>> GetCurrentUserPayments()
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User not authenticated");
 
-                var history = await _paymentService.GetUserPaymentHistoryAsync(userId.Value);
-                return Ok(history);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var history = await _paymentService.GetUserPaymentHistoryAsync(userId.Value);
+            return Ok(history);
         }
 
         // User: Add own payment
         [HttpPost("me/payments")]
         public async Task<ActionResult<PaymentResponse>> AddCurrentUserPayment([FromBody] CreatePaymentRequest request)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User not authenticated");
 
-                var payment = await _paymentService.AddPaymentAsync(userId.Value, request);
-                return CreatedAtAction(nameof(AddCurrentUserPayment), payment);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var payment = await _paymentService.AddPaymentAsync(userId.Value, request);
+            return CreatedAtAction(nameof(AddCurrentUserPayment), payment);
         }
 
         // Admin: Get all users
@@ -199,116 +178,88 @@ namespace PaymentTracker.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserProfileResponse>>> GetAllUsers()
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var users = await _userService.GetAllUsersAsync();
-                var responses = users.Select(u => new UserProfileResponse
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    PhoneNumber = u.PhoneNumber,
-                    Role = u.Role.ToString()
-                }).ToList();
-
-                return Ok(responses);
-            }
-            catch (Exception ex)
+            var users = await _userService.GetAllUsersAsync();
+            var responses = users.Select(u => new UserProfileResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = u.Id,
+                Username = u.Username,
+                PhoneNumber = u.PhoneNumber,
+                Role = u.Role.ToString()
+            }).ToList();
+
+            return Ok(responses);
         }
 
         // Admin: Create user
         [HttpPost]
         public async Task<ActionResult<UserProfileResponse>> CreateUser([FromBody] CreateUserRequest request)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var user = await _userService.CreateUserAsync(request);
-                return CreatedAtAction(nameof(GetCurrentUser), new { id = user.Id }, new UserProfileResponse
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    PhoneNumber = user.PhoneNumber,
-                    Role = user.Role.ToString()
-                });
-            }
-            catch (Exception ex)
+            var user = await _userService.CreateUserAsync(request);
+            return CreatedAtAction(nameof(GetCurrentUser), new { id = user.Id }, new UserProfileResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = user.Id,
+                Username = user.Username,
+                PhoneNumber = user.PhoneNumber,
+                Role = user.Role.ToString()
+            });
         }
 
         // Admin: Get specific user
         [HttpGet("{id}")]
         public async Task<ActionResult<UserProfileResponse>> GetUser(Guid id)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var user = await _userService.GetUserByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null)
+                return NotFound("User not found");
 
-                return Ok(new UserProfileResponse
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    PhoneNumber = user.PhoneNumber,
-                    Role = user.Role.ToString()
-                });
-            }
-            catch (Exception ex)
+            return Ok(new UserProfileResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = user.Id,
+                Username = user.Username,
+                PhoneNumber = user.PhoneNumber,
+                Role = user.Role.ToString()
+            });
         }
 
         // Admin: Get specific user's account
-        [HttpGet("{id}/account")]
-        public async Task<ActionResult<AccountResponse>> GetUserAccount(Guid id)
-        {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+        //[HttpGet("{id}/account")]
+        //public async Task<ActionResult<AccountResponse>> GetUserAccount(Guid id)
+        //{
+        //    var role = GetCurrentUserRole();
+        //    if (role != "Admin")
+        //        return Forbid();
 
-                // Verify user exists
-                var user = await _userService.GetUserByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
+        //    // Verify user exists
+        //    var user = await _userService.GetUserByIdAsync(id);
+        //    if (user == null)
+        //        return NotFound("User not found");
 
-                var account = await _accountService.GetAccountByUserIdAsync(id);
-                if (account == null)
-                    return NotFound("Account not found for this user");
+        //    var account = await _accountService.GetAccountByUserIdAsync(id);
+        //    if (account == null)
+        //        return NotFound("Account not found for this user");
 
-                return Ok(new AccountResponse
-                {
-                    Id = account.Id,
-                    UserId = account.UserId,
-                    BankName = account.BankName,
-                    AccountNumber = account.AccountNumber,
-                    AccountHolder = account.AccountHolder,
-                    Balance = account.Balance
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
+        //    return Ok(new AccountResponse
+        //    {
+        //        Id = account.Id,
+        //        UserId = account.UserId,
+        //        BankName = account.BankName,
+        //        AccountNumber = account.AccountNumber,
+        //        AccountHolder = account.AccountHolder,
+        //        Balance = account.Balance
+        //    });
+        //}
 
         // Admin: Update user
         [HttpPut("{id}")]

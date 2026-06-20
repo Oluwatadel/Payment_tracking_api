@@ -249,6 +249,12 @@ namespace PaymentTracker.Services
                 throw new NotFoundException("User not found");
             }
 
+            if(user.Role == UserRole.Admin)
+            {
+                _logger.LogError("YOu can delete admin account");
+                throw new InvalidOperationException("YOu can delete admin account");
+            }
+
             var payment = _paymentRepository.RemoveByUserIdAsync(userId);
             _userRepository.Remove(user);
             await _userRepository.SaveChangesAsync();
