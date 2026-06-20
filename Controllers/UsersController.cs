@@ -342,22 +342,15 @@ namespace PaymentTracker.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var success = await _userService.DeleteUserAsync(id);
-                if (!success)
-                    return NotFound("User not found");
+            var success = await _userService.DeleteUserAsync(id);
+            if (!success)
+                return NotFound("User not found");
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            return NoContent();
         }
     }
 }

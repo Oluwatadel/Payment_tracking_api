@@ -24,13 +24,16 @@ namespace PaymentTracker.Services
         private readonly IAccountRepository _accountRepository;
         private readonly IJwtService _jwtService;
         private readonly ILogger<UserService> _logger;
+        private readonly IPaymentRepository _paymentRepository;
 
-        public UserService(IUserRepository userRepository, IAccountRepository accountRepository, IJwtService jwtService, ILogger<UserService> logger)
+        public UserService(IUserRepository userRepository, IAccountRepository accountRepository, 
+            IJwtService jwtService, ILogger<UserService> logger, IPaymentRepository paymentRepository)
         {
             _userRepository = userRepository;
             _accountRepository = accountRepository;
             _jwtService = jwtService;
             _logger = logger;
+            _paymentRepository = paymentRepository;
         }
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
@@ -245,6 +248,8 @@ namespace PaymentTracker.Services
                 _logger.LogInformation("User not found");
                 throw new NotFoundException("User not found");
             }
+
+            var payment = _paymentRepository.RemoveByUserIdAsync(userId);
             _userRepository.Remove(user);
             await _userRepository.SaveChangesAsync();
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
