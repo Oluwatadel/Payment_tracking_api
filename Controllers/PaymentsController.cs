@@ -46,14 +46,36 @@ namespace PaymentTracker.Controllers
             return Ok(payments);
         }
 
-        //[HttpGet("admin")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<ActionResult> GetAdminAccount()
-        //{
-        //    var role = GetCurrentUserRole();
-        //    var account = await _accountService.GetAdminAccount(false);
-        //    return Ok(account);
-        //}
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<AccountResponse>> GetAdminAccount()
+        {
+            try
+            {
+                var role = GetCurrentUserRole();
+                if (role != "Admin")
+                    return Forbid();
+
+                var account = await _accountService.GetAdminAccount(false);
+                if (account == null)
+                    return NotFound("Admin account not found");
+
+                return Ok(new AccountResponse
+                {
+                    Id = account.Id,
+                    UserId = account.UserId,
+                    BankName = account.BankName,
+                    AccountNumber = account.AccountNumber,
+                    AccountHolder = account.AccountHolder,
+                    Balance = account.Balance
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
 
         // Admin: Get specific payment
         [HttpGet("{id}")]
