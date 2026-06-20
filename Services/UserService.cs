@@ -255,7 +255,12 @@ namespace PaymentTracker.Services
                 throw new InvalidOperationException("YOu can delete admin account");
             }
 
-            var payment = _paymentRepository.RemoveByUserIdAsync(userId);
+            var payments = await _paymentRepository.GetByUserIdAsync(userId);
+            var adminAccount = await _accountRepository.GetAdminAccount();
+            var balanceToDeduct = payments.Sum(p => p.Amount);
+            adminAccount.DeductPaymentFromBalance(balanceToDeduct);
+            await _paymentRepository.RemoveByUserIdAsync(userId);
+            await _accountRepository.RemoveByUserIdAsync(userId);
             _userRepository.Remove(user);
             await _userRepository.SaveChangesAsync();
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");

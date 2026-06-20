@@ -13,6 +13,7 @@ namespace PaymentTracker.Repositories
         Task<int> SaveChangesAsync();
         Task<Account> GetAdminAccount(bool tracking = true);
         void Update(Account account);
+        Task<int> RemoveByUserIdAsync(Guid userId);
     }
 
     public class AccountRepository : IAccountRepository
@@ -57,6 +58,13 @@ namespace PaymentTracker.Repositories
         public void Remove(Account account)
         {
             _context.Accounts.Remove(account);
+        }
+
+        public Task<int> RemoveByUserIdAsync(Guid userId)
+        {
+            return _context.Accounts
+                .Where(a => a.UserId == userId)
+                .ExecuteDeleteAsync();
         }
 
         public Task<int> SaveChangesAsync()
