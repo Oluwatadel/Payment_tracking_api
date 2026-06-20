@@ -7,6 +7,7 @@ using PaymentTracker.Services;
 using dotenv.net;
 using System.Text;
 using PaymentTracker.Models;
+using PaymentTracker;
 
 // Load environment variables from .env file
 DotEnv.Load();
@@ -156,6 +157,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.ConfigureExceptionHandler();
 
 app.UseCors("AllowAll");
 

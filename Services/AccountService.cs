@@ -41,7 +41,7 @@ namespace PaymentTracker.Services
             if (account == null)
             {
                 _logger.LogWarning("Account not found for user {UserId}", userId);
-                throw new KeyNotFoundException("Account not found");
+                throw new NotFoundException("Account not found");
             }
 
             _logger.LogInformation("Account found for user {UserId}", userId);
@@ -56,7 +56,7 @@ namespace PaymentTracker.Services
             if (!await _userRepository.ExistsByIdAsync(userId))
             {
                 _logger.LogWarning("Cannot create account. User {UserId} was not found", userId);
-                throw new KeyNotFoundException("User not found");
+                throw new NotFoundException("User not found");
             }
 
             if (await _accountRepository.ExistsByUserIdAsync(userId))
@@ -95,7 +95,7 @@ namespace PaymentTracker.Services
             if (account == null)
             {
                 _logger.LogWarning("Cannot update account. Account not found for user {UserId}", userId);
-                throw new KeyNotFoundException("Account not found");
+                throw new NotFoundException("Account not found");
             }
 
             if (!string.IsNullOrEmpty(request.BankName))

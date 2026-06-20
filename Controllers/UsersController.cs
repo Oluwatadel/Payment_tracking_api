@@ -46,58 +46,57 @@ namespace PaymentTracker.Controllers
         [Authorize]
         public async Task<ActionResult<UserProfileResponse>> GetCurrentUser()
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User not authenticated");
 
-                var user = await _userService.GetUserByIdAsync(userId.Value);
-                if (user == null)
-                    return NotFound("User not found");
+            var user = await _userService.GetUserByIdAsync(userId.Value);
+            if (user == null)
+                return NotFound("User not found");
 
-                return Ok(new UserProfileResponse
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    PhoneNumber = user.PhoneNumber,
-                    Role = user.Role.ToString()
-                });
-            }
-            catch (Exception ex)
+            return Ok(new UserProfileResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = user.Id,
+                Username = user.Username,
+                PhoneNumber = user.PhoneNumber,
+                Role = user.Role.ToString()
+            });
         }
 
+
+        [HttpPost("me/fcm-token")]
+        [Authorize]
+        public IActionResult UpdateFcmToken([FromBody] FcmTokenUpdateRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User not authenticated");
+
+            // Token persistence can be added with a UserDevice table later.
+            // For now this endpoint prevents mobile token registration from failing.
+            return NoContent();
+        }
         // User: Get own account
         [HttpGet("me/account")]
         public async Task<ActionResult<AccountResponse>> GetCurrentUserAccount()
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (!userId.HasValue)
-                    return Unauthorized("User not authenticated");
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User not authenticated");
 
-                var account = await _accountService.GetAccountByUserIdAsync(userId.Value);
-                if (account == null)
-                    return NotFound("Account not found");
+            var account = await _accountService.GetAccountByUserIdAsync(userId.Value);
+            if (account == null)
+                return NotFound("Account not found");
 
-                return Ok(new AccountResponse
-                {
-                    Id = account.Id,
-                    UserId = account.UserId,
-                    BankName = account.BankName,
-                    AccountNumber = account.AccountNumber,
-                    AccountHolder = account.AccountHolder,
-                    Balance = account.Balance
-                });
-            }
-            catch (Exception ex)
+            return Ok(new AccountResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = account.Id,
+                UserId = account.UserId,
+                BankName = account.BankName,
+                AccountNumber = account.AccountNumber,
+                AccountHolder = account.AccountHolder,
+                Balance = account.Balance
+            });
         }
 
         // User: Create own account
@@ -362,3 +361,4 @@ namespace PaymentTracker.Controllers
         }
     }
 }
+

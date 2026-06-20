@@ -107,85 +107,60 @@ namespace PaymentTracker.Controllers
         [HttpPost("user/{userId}")]
         public async Task<ActionResult<PaymentResponse>> AddPaymentForUser(Guid userId, [FromBody] CreatePaymentRequest request)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var payment = await _paymentService.AddPaymentAsync(userId, request);
-                return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var payment = await _paymentService.AddPaymentAsync(userId, request);
+            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
         }
 
         // Admin: Update payment
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<PaymentResponse>> UpdatePayment(Guid id, [FromBody] UpdatePaymentRequest request)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var payment = await _paymentService.UpdatePaymentAsync(id, request);
-                if (payment == null)
-                    return NotFound("Payment not found");
+            var payment = await _paymentService.UpdatePaymentAsync(id, request);
+            if (payment == null)
+                return NotFound("Payment not found");
 
-                return Ok(payment);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            return Ok(payment);
         }
 
         // Admin: Delete payment
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePayment(Guid id)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var success = await _paymentService.DeletePaymentAsync(id);
-                if (!success)
-                    return NotFound("Payment not found");
+            var success = await _paymentService.DeletePaymentAsync(id);
+            if (!success)
+                return NotFound("Payment not found");
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            return NoContent();
         }
 
         // Admin: Clear user payments
         [HttpPost("user/{userId}/clear")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ClearUserPayments(Guid userId)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var success = await _paymentService.ClearUserPaymentsAsync(userId);
-                if (!success)
-                    return NotFound("No payments found for user");
+            var success = await _paymentService.ClearUserPaymentsAsync(userId);
+            if (!success)
+                return NotFound("No payments found for user");
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            return NoContent();
         }
     }
 }

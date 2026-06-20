@@ -37,12 +37,6 @@ namespace PaymentTracker.Data
                 .HasForeignKey<Account>(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Payments)
-                .WithOne(p => p.User)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // Account configuration
             modelBuilder.Entity<Account>()
                 .Property(a => a.Balance)

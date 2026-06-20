@@ -49,10 +49,5 @@ namespace PaymentTracker.Models
         /// Gets or sets the related account entity.
         /// </summary>
         public Account? Account { get; set; }
-
-        /// <summary>
-        /// Gets or sets the payments associated with the user.
-        /// </summary>
-        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }

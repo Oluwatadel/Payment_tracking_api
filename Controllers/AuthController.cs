@@ -31,21 +31,14 @@ namespace PaymentTracker.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                    return BadRequest("Username and password are required");
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest("Username and password are required");
 
-                var response = await _userService.LoginAsync(request);
-                if (response == null)
-                    return Unauthorized("Invalid username or password");
+            var response = await _userService.LoginAsync(request);
+            if (response == null)
+                return Unauthorized("Invalid username or password");
 
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            return Ok(response);
         }
 
         /// <summary>
@@ -60,28 +53,21 @@ namespace PaymentTracker.Controllers
         [Authorize]
         public async Task<ActionResult<UserProfileResponse>> GetProfile()
         {
-            try
-            {
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-                    return Unauthorized("User not authenticated");
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                return Unauthorized("User not authenticated");
 
-                var user = await _userService.GetUserByIdAsync(userId);
-                if (user == null)
-                    return NotFound("User not found");
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found");
 
-                return Ok(new UserProfileResponse
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    PhoneNumber = user.PhoneNumber,
-                    Role = user.Role.ToString()
-                });
-            }
-            catch (Exception ex)
+            return Ok(new UserProfileResponse
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
+                Id = user.Id,
+                Username = user.Username,
+                PhoneNumber = user.PhoneNumber,
+                Role = user.Role.ToString()
+            });
         }
     }
 }

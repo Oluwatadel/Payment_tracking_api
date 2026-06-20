@@ -34,6 +34,11 @@ namespace PaymentTracker.DTOs
         public string? AccountHolder { get; set; }
     }
 
+    public class FcmTokenUpdateRequest
+    {
+        public required string FcmToken { get; set; }
+    }
+
     public class UserProfileResponse
     {
         public Guid Id { get; set; }
@@ -42,3 +47,4 @@ namespace PaymentTracker.DTOs
         public required string Role { get; set; }
     }
 }
+

@@ -16,7 +16,7 @@ namespace PaymentTracker.Repositories
         void Remove(Payment payment);
         void RemoveRange(IEnumerable<Payment> payments);
         Task<int> RemoveByUserIdAsync(Guid userId);
-        Task<int> SaveChangesAsync();
+        Task<bool> ExistsByReferenceAsync(string referenceNo);
     }
 
     public class PaymentRepository : IPaymentRepository
@@ -67,6 +67,11 @@ namespace PaymentTracker.Repositories
         public Task<bool> ExistsByIdAsync(Guid paymentId)
         {
             return _context.Payments.AnyAsync(p => p.Id == paymentId);
+        }
+
+        public Task<bool> ExistsByReferenceAsync(string referenceNo)
+        {
+            return _context.Payments.AnyAsync(p => p.ReferenceNumber == referenceNo);
         }
 
         public Task AddAsync(Payment payment)
