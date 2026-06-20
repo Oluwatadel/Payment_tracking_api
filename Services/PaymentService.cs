@@ -213,7 +213,9 @@ namespace PaymentTracker.Services
             }
 
             _paymentRepository.Remove(payment);
-            user.Account!.DeductPaymentFromBalance(payment.Amount);
+            var userAccount = await _accountRepository.GetByUserIdAsync(user.Id)
+                ?? throw new NotFoundException($"Account for user {user.Username} not found");
+            userAccount.DeductPaymentFromBalance(payment.Amount);
 
             var adminAccount = await _accountRepository.GetAdminAccount(tracking: true);
             if (adminAccount != null)
@@ -223,7 +225,9 @@ namespace PaymentTracker.Services
                 throw new NotFoundException("admin account issure");
             }
 
-            adminAccount!.DeductPaymentFromBalance(payment.Amount);            
+            adminAccount!.DeductPaymentFromBalance(payment.Amount);
+            _accountRepository.Update(adminAccount);
+            _accountRepository.Update(userAccount);
 
             await _uniOfWork.SaveChangesAsync();
 
@@ -260,7 +264,10 @@ namespace PaymentTracker.Services
             var totalAmount = await _paymentRepository.SumByUserIdAsync(userId);
             _paymentRepository.RemoveRange(userPayment);
 
-            user.Account!.DeductPaymentFromBalance(totalAmount);
+            var userAccount = await _accountRepository.GetByUserIdAsync(userId)
+                ?? throw new NotFoundException($"Account for user {user.Username} does not exist");
+
+            userAccount.DeductPaymentFromBalance(totalAmount);
 
             var adminAccount = await _accountRepository.GetAdminAccount(tracking: true);
             if (adminAccount != null)
@@ -273,7 +280,7 @@ namespace PaymentTracker.Services
             adminAccount!.DeductPaymentFromBalance(totalAmount);
 
             _accountRepository.Update(adminAccount);
-            _accountRepository.Update(user.Account);
+            _accountRepository.Update(userAccount);
 
             var changes = _uniOfWork.SaveChangesAsync();
 

@@ -142,8 +142,6 @@ namespace PaymentTracker.Services
                 AccountHolder = request.AccountHolder,
             };
 
-            user.Account = account;
-
             await _userRepository.AddAsync(user);
             await _accountRepository.AddAsync(account);
             var changes = await _userRepository.SaveChangesAsync();
