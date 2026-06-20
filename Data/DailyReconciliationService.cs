@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.IdentityModel.Tokens;
 using PaymentTracker.Services;
 
@@ -18,7 +18,7 @@ namespace PaymentTracker.Data
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while(!stoppingToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 //var now  = TimeZoneInfo.ConvertTime(DateTime.UtcNow, timeZoneInfo);
                 //var nextRunTime = new DateTime(now.Year, now.Month, now.Day, 5, 0, 0); // Next 5hours
@@ -28,7 +28,7 @@ namespace PaymentTracker.Data
 
 
                 using var scope = _serviceScopeFactory.CreateScope();
-                
+
                 var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
                 var paymentService = scope.ServiceProvider.GetRequiredService<IPaymentService>();
                 var adminAccount = await accountService.GetAdminAccount(true);
@@ -42,8 +42,8 @@ namespace PaymentTracker.Data
                 await accountService.ReconcileAdminAccount(stoppingToken);
                 _logger.LogInformation("Reconciliation completed at {Time}", DateTime.UtcNow);
 
-                _logger.LogInformation("Reconciliation will run at {NextRunTime}", DateTime.UtcNow.AddHours(5));
-                await Task.Delay(TimeSpan.FromHours(5), stoppingToken);
+                _logger.LogInformation("Reconciliation will run at {NextRunTime}", DateTime.UtcNow.AddMinutes(30));
+                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
             }
         }
     }
