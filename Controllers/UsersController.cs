@@ -203,7 +203,7 @@ namespace PaymentTracker.Controllers
                 return Forbid();
 
             var user = await _userService.CreateUserAsync(request);
-            return CreatedAtAction(nameof(GetCurrentUser), new { id = user.Id }, new UserProfileResponse
+            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new UserProfileResponse
             {
                 Id = user.Id,
                 Username = user.Username,

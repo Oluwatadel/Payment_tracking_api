@@ -44,5 +44,10 @@ namespace PaymentTracker.Models
         /// Gets or sets the user's role.
         /// </summary>
         public UserRole Role { get; set; } = UserRole.User;
+
+        /// <summary>
+        /// Gets or sets the related account entity.
+        /// </summary>
+        public Account? Account { get; set; }
     }
 }
