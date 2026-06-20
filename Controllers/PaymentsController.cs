@@ -38,29 +38,22 @@ namespace PaymentTracker.Controllers
         [Authorize]
         public async Task<ActionResult<List<PaymentResponse>>> GetAllPayments()
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
-
-                var payments = await _paymentService.GetAllPaymentsAsync();
-                return Ok(payments);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
-
-        [HttpGet("admin")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetAdminAccount()
-        {
             var role = GetCurrentUserRole();
-            var account = await _accountService.GetAdminAccount(false);
-            return Ok(account);
+            if (role != "Admin")
+                return Forbid();
+
+            var payments = await _paymentService.GetAllPaymentsAsync();
+            return Ok(payments);
         }
+
+        //[HttpGet("admin")]
+        //[Authorize(Roles = "Admin")]
+        //public async Task<ActionResult> GetAdminAccount()
+        //{
+        //    var role = GetCurrentUserRole();
+        //    var account = await _accountService.GetAdminAccount(false);
+        //    return Ok(account);
+        //}
 
         // Admin: Get specific payment
         [HttpGet("{id}")]
