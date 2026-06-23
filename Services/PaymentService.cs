@@ -238,6 +238,7 @@ namespace PaymentTracker.Services
 
         public async Task<bool> ClearUserPaymentsAsync(Guid userId)
         {
+            _logger.LogInformation($"+++++++++++++++++++++++{DateTime.UtcNow.DayOfYear}+++++++++++++++++++++++++++++++++++++++++");
             _logger.LogInformation("Clearing payments for user {UserId}", userId);
 
             var removedCount = await _paymentRepository.RemoveByUserIdAsync(userId);
@@ -270,11 +271,11 @@ namespace PaymentTracker.Services
             userAccount.DeductPaymentFromBalance(totalAmount);
 
             var adminAccount = await _accountRepository.GetAdminAccount(tracking: true);
-            if (adminAccount != null)
+            if (adminAccount == null)
             {
-                _logger.LogInformation("=======================================================");
-                _logger.LogInformation("Admin account issue");
-                throw new NotFoundException("admin account issure");
+                _logger.LogInformation("===========================================================================");
+                _logger.LogInformation("Admin account not found");
+                throw new NotFoundException("admin account issue");
             }
 
             adminAccount!.DeductPaymentFromBalance(totalAmount);
