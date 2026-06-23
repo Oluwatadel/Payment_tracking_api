@@ -98,7 +98,7 @@ namespace PaymentTracker.Services
         public async Task<PaymentResponse> AddPaymentAsync(Guid userId, CreatePaymentRequest request)
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-            _logger.LogInformation("Creating payment for user {UserId}", userId);
+            _logger.LogInformation("===Creating payment for user {UserId}===", userId);
 
             if(await _paymentRepository.ExistsByReferenceAsync(request.ReferenceNumber!))
             {
@@ -121,7 +121,7 @@ namespace PaymentTracker.Services
                 ReferenceNumber = request.ReferenceNumber
             };
 
-            var userAccount = await _accountRepository.GetByUserIdAsync(userId, tracking: true)
+            var userAccount = await _accountRepository.GetByUserIdAsync(userId, tracking: false)
                 ?? throw new NotFoundException("User account not found");
 
             _logger.LogInformation("Adding payment amount to user balance");
@@ -134,7 +134,7 @@ namespace PaymentTracker.Services
 
             //await UpdateUserBalanceAsync(userId);
             _logger.LogInformation("Adding payment amount to admin balance");
-            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
+            var adminAccount = await _accountRepository.GetAdminAccount(tracking: false)
                 ?? throw new NotFoundException("Admin account not found");
 
             adminAccount.AddPaymentToBalance(payment.Amount);
@@ -238,15 +238,19 @@ namespace PaymentTracker.Services
 
         public async Task<bool> ClearUserPaymentsAsync(Guid userId)
         {
-            _logger.LogInformation($"+++++++++++++++++++++++{DateTime.UtcNow.DayOfYear}+++++++++++++++++++++++++++++++++++++++++");
+            _logger.LogInformation($"+++++++++++++++++++++++{DateTime.UtcNow.ToShortDateString()}+++++++++++++++++++++++++++++++++++++++++");
             _logger.LogInformation("Clearing payments for user {UserId}", userId);
 
-            var removedCount = await _paymentRepository.RemoveByUserIdAsync(userId);
-            if (removedCount == 0)
+            var userPayment = await _paymentRepository.GetByUserIdAsync(userId);
+            if (!userPayment.Any())
             {
-                _logger.LogWarning("No payments found to clear for user {UserId}", userId);
-                return false;
+                _logger.LogInformation("No payment found");
+                throw new NotFoundException("No payment found");
             }
+
+
+            var totalAmount = await _paymentRepository.SumByUserIdAsync(userId);
+            //_paymentRepository.RemoveRange(userPayment);
 
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
@@ -255,22 +259,12 @@ namespace PaymentTracker.Services
                 throw new NotFoundException($"user for this payment was not found.");
             }
 
-            var userPayment = await _paymentRepository.GetByUserIdAsync(userId);
-            if(userPayment.Any())
-            {
-                _logger.LogInformation("No payment found");
-                throw new NotFoundException("No payment found");
-            }
-
-            var totalAmount = await _paymentRepository.SumByUserIdAsync(userId);
-            _paymentRepository.RemoveRange(userPayment);
-
             var userAccount = await _accountRepository.GetByUserIdAsync(userId)
                 ?? throw new NotFoundException($"Account for user {user.Username} does not exist");
 
             userAccount.DeductPaymentFromBalance(totalAmount);
 
-            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true);
+            var adminAccount = await _accountRepository.GetAdminAccount(tracking: false);
             if (adminAccount == null)
             {
                 _logger.LogInformation("===========================================================================");
@@ -278,12 +272,26 @@ namespace PaymentTracker.Services
                 throw new NotFoundException("admin account issue");
             }
 
+            var removedCount = await _paymentRepository.RemoveByUserIdAsync(userId);
+            if (removedCount == 0)
+            {
+                _logger.LogWarning("No payments found to clear for user {UserId}", userId);
+                return false;
+            }
+                       
+
+
             adminAccount!.DeductPaymentFromBalance(totalAmount);
 
             _accountRepository.Update(adminAccount);
             _accountRepository.Update(userAccount);
 
-            var changes = _uniOfWork.SaveChangesAsync();
+            var changes = await _uniOfWork.SaveChangesAsync();
+            if(changes <= 0)
+            {
+                _logger.LogError("Error saving deduction ater clearing user payment");
+                throw new SaveOperationException("Error saving deduction ater clearing user payment");
+            }
 
             _logger.LogInformation("Cleared {Count} payments for user {UserId}", removedCount, userId);
 

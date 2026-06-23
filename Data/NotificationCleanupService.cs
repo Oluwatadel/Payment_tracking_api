@@ -44,7 +44,7 @@ namespace PaymentTracker.Services
                 }
 
                 // Check every minute
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
             }
 
             _logger.LogInformation("Notification Cleanup Service is stopping.");

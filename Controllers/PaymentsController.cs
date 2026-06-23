@@ -103,19 +103,12 @@ namespace PaymentTracker.Controllers
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<List<PaymentResponse>>> GetUserPayments(Guid userId)
         {
-            try
-            {
-                var role = GetCurrentUserRole();
-                if (role != "Admin")
-                    return Forbid();
+            var role = GetCurrentUserRole();
+            if (role != "Admin")
+                return Forbid();
 
-                var payments = await _paymentService.GetUserPaymentsAsync(userId);
-                return Ok(payments);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var payments = await _paymentService.GetUserPaymentsAsync(userId);
+            return Ok(payments);
         }
 
         // Admin: Add payment for a user
@@ -163,7 +156,7 @@ namespace PaymentTracker.Controllers
         }
 
         // Admin: Clear user payments
-        [HttpPost("user/{userId}/clear")]
+        [HttpDelete("user/{userId}/clear")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ClearUserPayments(Guid userId)
         {

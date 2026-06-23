@@ -44,10 +44,11 @@ namespace PaymentTracker.Repositories
             return _context.Accounts.AddAsync(account).AsTask();
         }
 
-        public async Task<Account> GetAdminAccount(bool tracking = true)
+        public async Task<Account> GetAdminAccount(bool tracking = false)
         {
             var query = from acc in _context.Accounts
                         join user in _context.Users on UserRole.Admin equals user.Role
+                        where acc.UserId == user.Id
                         select acc;
             if(tracking)
                 query = query.AsNoTracking();
