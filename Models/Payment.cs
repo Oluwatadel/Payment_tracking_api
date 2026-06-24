@@ -32,6 +32,9 @@ namespace PaymentTracker.Models
         /// </summary>
         public string? ReferenceNumber { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+
         // Navigation properties
         /// <summary>
         /// Gets or sets the related user entity.

@@ -18,6 +18,7 @@ namespace PaymentTracker.Repositories
         Task<int> RemoveByUserIdAsync(Guid userId);
         Task<bool> ExistsByReferenceAsync(string referenceNo);
         Task<Dictionary<Guid, decimal>> GetAllUserPaymentSumsAsync();
+        Task<decimal> GetTotalEverProcessedAsync();
     }
 
     public class PaymentRepository : IPaymentRepository
@@ -82,19 +83,35 @@ namespace PaymentTracker.Repositories
 
         public void Remove(Payment payment)
         {
-            _context.Payments.Remove(payment);
+            payment.IsDeleted = true;
+            payment.DeletedAt = DateTime.UtcNow;
+            _context.Payments.Update(payment);
         }
 
         public void RemoveRange(IEnumerable<Payment> payments)
         {
-            _context.Payments.RemoveRange(payments);
+            foreach (var payment in payments)
+            {
+                payment.IsDeleted = true;
+                payment.DeletedAt = DateTime.UtcNow;
+            }
+            _context.Payments.UpdateRange(payments);
         }
 
         public Task<int> RemoveByUserIdAsync(Guid userId)
         {
             return _context.Payments
                 .Where(p => p.UserId == userId)
-                .ExecuteDeleteAsync();
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.IsDeleted, true)
+                    .SetProperty(p => p.DeletedAt, DateTime.UtcNow));
+        }
+
+        public Task<decimal> GetTotalEverProcessedAsync()
+        {
+            return _context.Payments
+                .IgnoreQueryFilters()
+                .SumAsync(p => p.Amount);
         }
 
         public Task<Dictionary<Guid, decimal>> GetAllUserPaymentSumsAsync()

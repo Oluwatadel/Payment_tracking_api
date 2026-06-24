@@ -8,12 +8,13 @@ namespace PaymentTracker.Repositories
     {
         Task<User?> GetByIdAsync(Guid userId, bool tracking = false);
         Task<User?> GetByUsernameAsync(string username, bool tracking = false);
-        Task<List<User>> GetAllAsync();
+        Task<List<User>> GetAllAsync(bool? isActive = null, string? search = null);
         Task<bool> ExistsByIdAsync(Guid userId);
         Task<bool> ExistsByUsernameAsync(string username, Guid? excludedUserId = null);
         Task<bool> ExistsByPhoneNumberAsync(string phoneNumber, Guid? excludedUserId = null);
         Task AddAsync(User user);
-        void Remove(User user);
+        void Deactivate(User user);
+        void Reactivate(User user);
         Task<int> SaveChangesAsync();
     }
 
@@ -44,12 +45,19 @@ namespace PaymentTracker.Repositories
             return await query.FirstOrDefaultAsync(u => u.Username == username);
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<User>> GetAllAsync(bool? isActive = null, string? search = null)
         {
-            return await _context.Users
-                .AsNoTracking()
-                .OrderBy(u => u.Id)
-                .ToListAsync();
+            var query = _context.Users.AsNoTracking().AsQueryable();
+
+            if (isActive.HasValue)
+                query = query.Where(u => u.IsActive == isActive.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u =>
+                    u.Username.Contains(search) ||
+                    u.PhoneNumber.Contains(search));
+
+            return await query.OrderBy(u => u.Username).ToListAsync();
         }
 
         public Task<bool> ExistsByIdAsync(Guid userId)
@@ -76,9 +84,18 @@ namespace PaymentTracker.Repositories
             return _context.Users.AddAsync(user).AsTask();
         }
 
-        public void Remove(User user)
+        public void Deactivate(User user)
         {
-            _context.Users.Remove(user);
+            user.IsActive = false;
+            user.DeactivatedAt = DateTime.UtcNow;
+            _context.Users.Update(user);
+        }
+
+        public void Reactivate(User user)
+        {
+            user.IsActive = true;
+            user.DeactivatedAt = null;
+            _context.Users.Update(user);
         }
 
         public Task<int> SaveChangesAsync()

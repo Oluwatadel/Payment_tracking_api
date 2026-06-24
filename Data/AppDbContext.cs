@@ -53,6 +53,9 @@ namespace PaymentTracker.Data
             
             modelBuilder.Entity<Payment>()
                 .HasIndex(p => new { p.UserId, p.PaymentDate });
+
+            modelBuilder.Entity<Payment>()
+                .HasQueryFilter(p => !p.IsDeleted);
         }
     }
 }

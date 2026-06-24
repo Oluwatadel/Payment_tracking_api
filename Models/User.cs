@@ -45,6 +45,9 @@ namespace PaymentTracker.Models
         /// </summary>
         public UserRole Role { get; set; } = UserRole.User;
 
+        public bool IsActive { get; set; } = true;
+        public DateTime? DeactivatedAt { get; set; }
+
         /// <summary>
         /// Gets or sets the related account entity.
         /// </summary>
