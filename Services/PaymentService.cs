@@ -16,6 +16,7 @@ namespace PaymentTracker.Services
         Task<PaymentResponse> UpdatePaymentAsync(Guid paymentId, UpdatePaymentRequest request);
         Task<bool> DeletePaymentAsync(Guid paymentId);
         Task<bool> ClearUserPaymentsAsync(Guid userId);
+        Task<decimal> GetTotalEverProcessedAsync();
         //Task UpdateUserBalanceAsync(Guid userId);
     }
 
@@ -314,6 +315,11 @@ namespace PaymentTracker.Services
             _logger.LogInformation("Cleared {Count} payments for user {UserId}", removedCount, userId);
 
             return true;
+        }
+
+        public Task<decimal> GetTotalEverProcessedAsync()
+        {
+            return _paymentRepository.GetTotalEverProcessedAsync();
         }
 
         private async Task UpdateUserBalanceAsync(Guid userId)

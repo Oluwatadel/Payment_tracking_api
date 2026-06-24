@@ -45,6 +45,17 @@ namespace PaymentTracker.DTOs
         public required string Username { get; set; }
         public required string PhoneNumber { get; set; }
         public required string Role { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime? DeactivatedAt { get; set; }
+    }
+
+    public class UserStatsResponse
+    {
+        public int TotalUsers { get; set; }
+        public int ActiveUsers { get; set; }
+        public int InactiveUsers { get; set; }
+        public decimal TotalEverProcessed { get; set; }
+        public decimal ActiveBalance { get; set; }
     }
 }
 

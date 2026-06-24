@@ -12,10 +12,11 @@ namespace PaymentTracker.Services
         Task<LoginResponse?> LoginAsync(LoginRequest request);
         Task<User?> GetUserByIdAsync(Guid userId);
         Task<User?> GetUserByUsernameAsync(string username);
-        Task<List<User>> GetAllUsersAsync();
+        Task<List<User>> GetAllUsersAsync(bool? isActive = null, string? search = null);
         Task<User> CreateUserAsync(CreateUserRequest request);
         Task<User?> UpdateUserAsync(Guid userId, UpdateUserRequest request);
-        Task<bool> DeleteUserAsync(Guid userId);
+        Task<bool> DeactivateUserAsync(Guid userId);
+        Task<bool> ActivateUserAsync(Guid userId);
     }
 
     public class UserService : IUserService
@@ -53,6 +54,12 @@ namespace PaymentTracker.Services
                 _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
                 _logger.LogInformation("Invalid password");
                 throw new InvalidOperationException("Invalid username or password");
+            }
+
+            if (!user.IsActive)
+            {
+                _logger.LogInformation("User {Username} is inactive and cannot log in", user.Username);
+                throw new InvalidOperationException("Account is inactive. Please contact your administrator.");
             }
 
             var token = _jwtService.GenerateToken(user);
@@ -97,12 +104,11 @@ namespace PaymentTracker.Services
             return user;
         }
 
-        public async Task<List<User>> GetAllUsersAsync()
+        public async Task<List<User>> GetAllUsersAsync(bool? isActive = null, string? search = null)
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-            _logger.LogInformation("Fetching all users");
-            var users = await _userRepository.GetAllAsync();
-            _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
+            _logger.LogInformation("Fetching all users (isActive={IsActive}, search={Search})", isActive, search);
+            var users = await _userRepository.GetAllAsync(isActive, search);
             _logger.LogInformation($"Total users found: {users.Count}");
             return users;
         }
@@ -235,37 +241,42 @@ namespace PaymentTracker.Services
             return user;
         }
 
-        public async Task<bool> DeleteUserAsync(Guid userId)
+        public async Task<bool> DeactivateUserAsync(Guid userId)
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-            _logger.LogInformation($"Deleting user with Id: {userId}");
+            _logger.LogInformation("Deactivating user {UserId}", userId);
             var user = await _userRepository.GetByIdAsync(userId, tracking: true);
             if (user == null)
-            {
-                _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-                _logger.LogInformation("User not found");
                 throw new NotFoundException("User not found");
-            }
 
-            if(user.Role == UserRole.Admin)
-            {
-                _logger.LogError("YOu can delete admin account");
-                throw new InvalidOperationException("YOu can delete admin account");
-            }
+            if (user.Role == UserRole.Admin)
+                throw new InvalidOperationException("Cannot deactivate the admin account");
 
+            if (!user.IsActive)
+                throw new InvalidOperationException("User is already inactive");
 
-            //Deleting user's payment history should result to deduction of the total from system balance
-
-            var payments = await _paymentRepository.GetByUserIdAsync(userId);
-            var adminAccount = await _accountRepository.GetAdminAccount();
-            var balanceToDeduct = payments.Sum(p => p.Amount);
-            adminAccount.DeductPaymentFromBalance(balanceToDeduct);
-            await _paymentRepository.RemoveByUserIdAsync(userId);
-            await _accountRepository.RemoveByUserIdAsync(userId);
-            _userRepository.Remove(user);
+            _userRepository.Deactivate(user);
             await _userRepository.SaveChangesAsync();
+
+            _logger.LogInformation("User {UserId} deactivated successfully", userId);
+            return true;
+        }
+
+        public async Task<bool> ActivateUserAsync(Guid userId)
+        {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
-            _logger.LogInformation($"User with Id: {user.Id} deleted successfully");
+            _logger.LogInformation("Activating user {UserId}", userId);
+            var user = await _userRepository.GetByIdAsync(userId, tracking: true);
+            if (user == null)
+                throw new NotFoundException("User not found");
+
+            if (user.IsActive)
+                throw new InvalidOperationException("User is already active");
+
+            _userRepository.Reactivate(user);
+            await _userRepository.SaveChangesAsync();
+
+            _logger.LogInformation("User {UserId} activated successfully", userId);
             return true;
         }
     }

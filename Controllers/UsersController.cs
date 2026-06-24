@@ -59,7 +59,9 @@ namespace PaymentTracker.Controllers
                 Id = user.Id,
                 Username = user.Username,
                 PhoneNumber = user.PhoneNumber,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                IsActive = user.IsActive,
+                DeactivatedAt = user.DeactivatedAt
             });
         }
 
@@ -173,25 +175,44 @@ namespace PaymentTracker.Controllers
             return CreatedAtAction(nameof(AddCurrentUserPayment), payment);
         }
 
-        // Admin: Get all users
+        // Admin: Get all users (supports ?isActive=true/false&search=xxx)
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<UserProfileResponse>>> GetAllUsers()
+        public async Task<ActionResult<List<UserProfileResponse>>> GetAllUsers(
+            [FromQuery] bool? isActive = null,
+            [FromQuery] string? search = null)
         {
-            var role = GetCurrentUserRole();
-            if (role != "Admin")
-                return Forbid();
-
-            var users = await _userService.GetAllUsersAsync();
+            var users = await _userService.GetAllUsersAsync(isActive, search);
             var responses = users.Select(u => new UserProfileResponse
             {
                 Id = u.Id,
                 Username = u.Username,
                 PhoneNumber = u.PhoneNumber,
-                Role = u.Role.ToString()
+                Role = u.Role.ToString(),
+                IsActive = u.IsActive,
+                DeactivatedAt = u.DeactivatedAt
             }).ToList();
 
             return Ok(responses);
+        }
+
+        // Admin: Get stats (total users + total ever processed)
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserStatsResponse>> GetStats()
+        {
+            var allUsers = await _userService.GetAllUsersAsync();
+            var totalEver = await _paymentService.GetTotalEverProcessedAsync();
+            var adminAccount = await _accountService.GetAdminAccount(false);
+
+            return Ok(new UserStatsResponse
+            {
+                TotalUsers = allUsers.Count,
+                ActiveUsers = allUsers.Count(u => u.IsActive),
+                InactiveUsers = allUsers.Count(u => !u.IsActive),
+                TotalEverProcessed = totalEver,
+                ActiveBalance = adminAccount?.Balance ?? 0
+            });
         }
 
         // Admin: Create user
@@ -289,18 +310,21 @@ namespace PaymentTracker.Controllers
             }
         }
 
-        // Admin: Delete user
+        // Admin: Deactivate user
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeactivateUser(Guid id)
         {
-            var role = GetCurrentUserRole();
-            if (role != "Admin")
-                return Forbid();
+            await _userService.DeactivateUserAsync(id);
+            return NoContent();
+        }
 
-            var success = await _userService.DeleteUserAsync(id);
-            if (!success)
-                return NotFound("User not found");
-
+        // Admin: Reactivate user
+        [HttpPut("{id}/activate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ActivateUser(Guid id)
+        {
+            await _userService.ActivateUserAsync(id);
             return NoContent();
         }
     }
