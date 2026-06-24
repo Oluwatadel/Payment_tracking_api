@@ -56,6 +56,10 @@ namespace PaymentTracker.Data
 
             modelBuilder.Entity<Payment>()
                 .HasQueryFilter(p => !p.IsDeleted);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.IsActive)
+                .HasDefaultValue(true);
         }
     }
 }

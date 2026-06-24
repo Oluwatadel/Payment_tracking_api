@@ -22,7 +22,7 @@ namespace PaymentTracker.Migrations
                 table: "Users",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "DeletedAt",
