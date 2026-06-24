@@ -28,21 +28,12 @@ namespace PaymentTracker.Data
 
 
                 using var scope = _serviceScopeFactory.CreateScope();
-
                 var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
-                var paymentService = scope.ServiceProvider.GetRequiredService<IPaymentService>();
-                var adminAccount = await accountService.GetAdminAccount(true);
-                var getAllPaymentSummary = (await paymentService.GetAllPaymentsAsync()).Sum(p => p.Amount);
-                if (adminAccount.Balance < 0 || getAllPaymentSummary > adminAccount.Balance)
-                {
-                    _logger.LogWarning("Admin account balance is negative: {Balance}. Reconciliation will proceed.", adminAccount.Balance);
-                    await accountService.ReconcileAdminAccount(stoppingToken);
-                    continue;
-                }
-                await accountService.ReconcileAdminAccount(stoppingToken);
-                _logger.LogInformation("Reconciliation completed at {Time}", DateTime.UtcNow);
 
-                _logger.LogInformation("Reconciliation will run at {NextRunTime}", DateTime.UtcNow.AddMinutes(30));
+                await accountService.ReconcileUserBalances(stoppingToken);
+                await accountService.ReconcileAdminAccount(stoppingToken);
+
+                _logger.LogInformation("Reconciliation completed at {Time}", DateTime.UtcNow);
                 await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
             }
         }

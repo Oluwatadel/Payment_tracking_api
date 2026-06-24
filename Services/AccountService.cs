@@ -12,6 +12,7 @@ namespace PaymentTracker.Services
         Task<Account> CreateAccountAsync(Guid userId, CreateAccountRequest request);
         Task<Account> UpdateAccountAsync(Guid userId, UpdateAccountRequest request);
         Task ReconcileAdminAccount(CancellationToken cancellationToken);
+        Task ReconcileUserBalances(CancellationToken cancellationToken);
     }
 
     public class AccountService : IAccountService
@@ -125,6 +126,36 @@ namespace PaymentTracker.Services
             return _accountRepository.GetAdminAccount(tracking);
         }
 
+        public async Task ReconcileUserBalances(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Starting user balance reconciliation at {Time}", DateTime.UtcNow);
+
+            var paymentSums = await _paymentRepository.GetAllUserPaymentSumsAsync();
+            var accounts = await _accountRepository.GetAllUserAccountsAsync(tracking: true);
+
+            var corrected = 0;
+            foreach (var account in accounts)
+            {
+                var correctBalance = paymentSums.GetValueOrDefault(account.UserId, 0m);
+                var delta = correctBalance - account.Balance;
+                if (delta != 0m)
+                {
+                    account.AddPaymentToBalance(delta);
+                    corrected++;
+                }
+            }
+
+            if (corrected > 0)
+            {
+                await _unitOfwork.SaveChangesAsync();
+                _logger.LogInformation("Reconciled {Count} user account(s) at {Time}", corrected, DateTime.UtcNow);
+            }
+            else
+            {
+                _logger.LogInformation("All user balances are correct. No changes needed.");
+            }
+        }
+
         public async Task ReconcileAdminAccount(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"=========================={DateTime.Now:dd-MM-yyyy, HH:mm:ss}===============================");
@@ -147,11 +178,7 @@ namespace PaymentTracker.Services
             var totalPaymentAccruedOntheApp = (await _paymentRepository.GetAllAsync()).Sum(p => p.Amount);
 
             var deficit = totalPaymentAccruedOntheApp - admin.Balance;
-            if (deficit > 0)
-            {
-                admin.AddPaymentToBalance(deficit);
-                _logger.LogInformation($"Admin account balance reconciled. Added {deficit:C} to the balance.");
-            }
+            admin.AddPaymentToBalance(deficit);
             _accountRepository.Update(admin);
             var changes = await _unitOfwork.SaveChangesAsync();
             if (changes <= 0)

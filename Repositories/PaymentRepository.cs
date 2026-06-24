@@ -17,6 +17,7 @@ namespace PaymentTracker.Repositories
         void RemoveRange(IEnumerable<Payment> payments);
         Task<int> RemoveByUserIdAsync(Guid userId);
         Task<bool> ExistsByReferenceAsync(string referenceNo);
+        Task<Dictionary<Guid, decimal>> GetAllUserPaymentSumsAsync();
     }
 
     public class PaymentRepository : IPaymentRepository
@@ -94,6 +95,14 @@ namespace PaymentTracker.Repositories
             return _context.Payments
                 .Where(p => p.UserId == userId)
                 .ExecuteDeleteAsync();
+        }
+
+        public Task<Dictionary<Guid, decimal>> GetAllUserPaymentSumsAsync()
+        {
+            return _context.Payments
+                .GroupBy(p => p.UserId)
+                .Select(g => new { UserId = g.Key, Total = g.Sum(p => p.Amount) })
+                .ToDictionaryAsync(x => x.UserId, x => x.Total);
         }
 
         public Task<int> SaveChangesAsync()

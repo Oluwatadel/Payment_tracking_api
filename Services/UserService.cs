@@ -253,6 +253,9 @@ namespace PaymentTracker.Services
                 throw new InvalidOperationException("YOu can delete admin account");
             }
 
+
+            //Deleting user's payment history should result to deduction of the total from system balance
+
             var payments = await _paymentRepository.GetByUserIdAsync(userId);
             var adminAccount = await _accountRepository.GetAdminAccount();
             var balanceToDeduct = payments.Sum(p => p.Amount);

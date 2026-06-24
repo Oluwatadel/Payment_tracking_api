@@ -10,6 +10,7 @@ namespace PaymentTracker.DTOs
 
     public class UpdatePaymentRequest
     {
+        public Guid UserId { get; set; }
         public decimal? Amount { get; set; }
         public DateTime? PaymentDate { get; set; }
         public string? BankName { get; set; }

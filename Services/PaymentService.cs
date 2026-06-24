@@ -165,8 +165,26 @@ namespace PaymentTracker.Services
                 throw new KeyNotFoundException("Payment not found");
             }
 
-            var previousPaymentAmount = payment.Amount;
+            _logger.LogInformation("Getting user account");
+            var userAccount = await _accountRepository.GetByUserIdAsync(request.UserId);
+            if(userAccount == null)
+            {
+                _logger.LogInformation("User not found");
+                throw new NotFoundException("\"User not found");
+            }
 
+            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
+                ?? throw new NotFoundException("Admin account not found");
+
+            if(request.Amount.HasValue)
+            {
+                userAccount.DeductPaymentFromBalance(payment.Amount);
+                adminAccount.DeductPaymentFromBalance(payment.Amount);
+
+                userAccount.AddPaymentToBalance(request.Amount.Value);
+                adminAccount.AddPaymentToBalance(request.Amount.Value);
+            }
+            
             payment.UpdatePaymentDetails(
                 amount: request.Amount,
                 paymentDate: request.PaymentDate,
@@ -174,11 +192,9 @@ namespace PaymentTracker.Services
                 referenceNumber: request.ReferenceNumber
             );
 
-            var adminAccount = await _accountRepository.GetAdminAccount(tracking: true)
-                ?? throw new NotFoundException("Admin account not found");
+            _accountRepository.Update(userAccount);
+            _accountRepository.Update(adminAccount);
 
-            adminAccount.AddPaymentToBalance(previousPaymentAmount - payment.Amount);
-            payment.UpdatedAt = DateTime.UtcNow;
             var changes = await _uniOfWork.SaveChangesAsync();
 
             if (changes <= 0)
@@ -212,22 +228,24 @@ namespace PaymentTracker.Services
                 throw new NotFoundException($"user for this payment was not found.");
             }
 
-            _paymentRepository.Remove(payment);
             var userAccount = await _accountRepository.GetByUserIdAsync(user.Id)
                 ?? throw new NotFoundException($"Account for user {user.Username} not found");
             userAccount.DeductPaymentFromBalance(payment.Amount);
 
             var adminAccount = await _accountRepository.GetAdminAccount(tracking: true);
-            if (adminAccount != null)
+            if (adminAccount == null)
             {
                 _logger.LogInformation("=======================================================");
                 _logger.LogInformation("Admin account issue");
-                throw new NotFoundException("admin account issure");
+                throw new NotFoundException("admin account issue");
             }
 
             adminAccount!.DeductPaymentFromBalance(payment.Amount);
             _accountRepository.Update(adminAccount);
             _accountRepository.Update(userAccount);
+
+            _paymentRepository.Remove(payment);
+
 
             await _uniOfWork.SaveChangesAsync();
 

@@ -12,6 +12,7 @@ namespace PaymentTracker.Repositories
         void Remove(Account account);
         Task<int> SaveChangesAsync();
         Task<Account> GetAdminAccount(bool tracking = true);
+        Task<List<Account>> GetAllUserAccountsAsync(bool tracking = false);
         void Update(Account account);
         Task<int> RemoveByUserIdAsync(Guid userId);
     }
@@ -46,16 +47,27 @@ namespace PaymentTracker.Repositories
 
         public async Task<Account> GetAdminAccount(bool tracking = false)
         {
-            var query = from acc in _context.Accounts
-                        join user in _context.Users on UserRole.Admin equals user.Role
-                        where acc.UserId == user.Id
-                        select acc;
-            if(tracking)
+            var query = from user in _context.Users
+                        join acct in _context.Accounts on user.Id equals acct.UserId
+                        where user.Role == UserRole.Admin
+                        select acct;
+            if (!tracking)
                 query = query.AsNoTracking();
 
-            var account = await query.FirstOrDefaultAsync();
-            return account!;
+            return (await query.FirstOrDefaultAsync())!;
         }
+        public async Task<List<Account>> GetAllUserAccountsAsync(bool tracking = false)
+        {
+            var query = from user in _context.Users
+                        join acct in _context.Accounts on user.Id equals acct.UserId
+                        where user.Role != UserRole.Admin
+                        select acct;
+            if (!tracking)
+                query = query.AsNoTracking();
+
+            return await query.ToListAsync();
+        }
+
         public void Remove(Account account)
         {
             _context.Accounts.Remove(account);

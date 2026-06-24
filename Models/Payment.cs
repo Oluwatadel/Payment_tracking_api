@@ -48,6 +48,7 @@ namespace PaymentTracker.Models
                 BankName = bankName;
             if(!string.IsNullOrEmpty(referenceNumber))
                 ReferenceNumber = referenceNumber;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }
