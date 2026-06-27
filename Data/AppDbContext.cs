@@ -13,6 +13,7 @@ namespace PaymentTracker.Data
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<PasswordChangeRequest> PasswordChangeRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

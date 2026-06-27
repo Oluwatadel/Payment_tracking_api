@@ -327,6 +327,15 @@ namespace PaymentTracker.Controllers
             await _userService.ActivateUserAsync(id);
             return NoContent();
         }
+
+        // Admin: Force reset a user's password (for forgotten password)
+        [HttpPut("{id}/reset-password")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ResetPassword(Guid id, [FromBody] AdminResetPasswordRequest request)
+        {
+            await _userService.ResetPasswordAsync(id, request.NewPassword);
+            return NoContent();
+        }
     }
 }
 

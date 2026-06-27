@@ -49,6 +49,11 @@ namespace PaymentTracker.DTOs
         public DateTime? DeactivatedAt { get; set; }
     }
 
+    public class AdminResetPasswordRequest
+    {
+        public required string NewPassword { get; set; }
+    }
+
     public class UserStatsResponse
     {
         public int TotalUsers { get; set; }

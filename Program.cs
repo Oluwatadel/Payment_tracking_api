@@ -41,6 +41,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IPasswordChangeRequestRepository, PasswordChangeRequestRepository>();
+builder.Services.AddScoped<IPasswordChangeRequestService, PasswordChangeRequestService>();
 builder.Services.AddScoped<IUnitOfWork,UnitOfWork>();
 builder.Services.AddHostedService<DailyReconciliationService>();
 builder.Services.AddHostedService<NotificationCleanupService>();

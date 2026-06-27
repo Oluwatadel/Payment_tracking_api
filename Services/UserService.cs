@@ -17,6 +17,7 @@ namespace PaymentTracker.Services
         Task<User?> UpdateUserAsync(Guid userId, UpdateUserRequest request);
         Task<bool> DeactivateUserAsync(Guid userId);
         Task<bool> ActivateUserAsync(Guid userId);
+        Task ResetPasswordAsync(Guid userId, string newPassword);
     }
 
     public class UserService : IUserService
@@ -278,6 +279,24 @@ namespace PaymentTracker.Services
 
             _logger.LogInformation("User {UserId} activated successfully", userId);
             return true;
+        }
+
+        public async Task ResetPasswordAsync(Guid userId, string newPassword)
+        {
+            _logger.LogInformation("Admin resetting password for user {UserId}", userId);
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+                throw new InvalidOperationException("Password must be at least 6 characters");
+
+            var user = await _userRepository.GetByIdAsync(userId, tracking: true);
+            if (user == null)
+                throw new NotFoundException("User not found");
+
+            user.PasswordHash = BC.HashPassword(newPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Password reset successfully for user {UserId}", userId);
         }
     }
 }
